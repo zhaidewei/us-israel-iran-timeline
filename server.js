@@ -9,6 +9,7 @@ const parser = new Parser({ timeout: 10000 });
 const EVENTS_FILE     = path.join(__dirname, 'events.json');
 const POLYMARKET_FILE = path.join(__dirname, 'polymarket.json');
 const PRICES_FILE     = path.join(__dirname, 'prices.json');
+const ANALYSIS_FILE   = path.join(__dirname, 'analysis.json');
 const PORT = 3000;
 
 const DEEPL_TOKEN    = process.env.DEEPL_TOKEN;
@@ -466,6 +467,93 @@ async function fetchMarketPrices() {
   return data;
 }
 
+// ─── Situation Analysis ───────────────────────────────────────────────────────
+
+function loadAnalysis() {
+  try { return JSON.parse(fs.readFileSync(ANALYSIS_FILE, 'utf8')); }
+  catch { return null; }
+}
+
+function saveAnalysis(data) {
+  fs.writeFileSync(ANALYSIS_FILE, JSON.stringify(data, null, 2), 'utf8');
+}
+
+async function generateSituationReport() {
+  if (!DEEPSEEK_TOKEN) { console.warn('[分析] DEEPSEEK_API_TOKEN 未设置，跳过'); return loadAnalysis(); }
+
+  const events = loadEvents();
+  if (!events.length) { console.warn('[分析] 无事件，跳过'); return loadAnalysis(); }
+
+  // 取最近48小时优先 + 补充更早事件，最多60条
+  const cutoff48h = Date.now() - 48 * 60 * 60 * 1000;
+  const recent    = events.filter(e => new Date(e.pubDate).getTime() > cutoff48h);
+  const older     = events.filter(e => new Date(e.pubDate).getTime() <= cutoff48h);
+  const sample    = [...recent, ...older].slice(0, 60);
+
+  // 按时间正序排列，方便 LLM 理解时间线
+  sample.sort((a, b) => new Date(a.pubDate) - new Date(b.pubDate));
+
+  const eventList = sample.map((e, i) => {
+    const date = new Date(e.pubDate).toLocaleDateString('zh-CN', { month: 'numeric', day: 'numeric', timeZone: 'Asia/Shanghai' });
+    const title = e.titleZh || e.titleEn;
+    const brief = e.briefZh ? `（${e.briefZh}）` : '';
+    const cat   = e.category ? `[${e.category}]` : '';
+    return `${i + 1}. ${date} ${cat} ${title}${brief}`;
+  }).join('\n');
+
+  const prompt =
+    `你是中东军事冲突分析专家。以下是关于美国/以色列 vs 伊朗冲突的最新新闻事件列表（按时间正序）。\n\n` +
+    `事件列表（共 ${sample.length} 条）：\n${eventList}\n\n` +
+    `请基于以上事件，生成一份结构化战局综述，严格返回以下 JSON 格式：\n` +
+    `{\n` +
+    `  "riskLevel": 1-5整数（1=紧张对峙, 3=局部冲突, 5=全面战争）,\n` +
+    `  "riskLabel": "简短风险描述，如"全面战争"",\n` +
+    `  "overview": "100-150字整体态势概述，客观简洁",\n` +
+    `  "phases": [\n` +
+    `    { "label": "阶段名称", "dateRange": "日期范围", "summary": "40-60字描述" }\n` +
+    `  ],\n` +
+    `  "actors": [\n` +
+    `    { "name": "方名称", "stance": "一句话立场", "emoji": "一个代表emoji" }\n` +
+    `  ],\n` +
+    `  "keySignals": [\n` +
+    `    { "signal": "关键信号或转折点", "implication": "含义" }\n` +
+    `  ],\n` +
+    `  "trajectory": "60-80字走向研判，包括最可能的后续发展",\n` +
+    `  "watchPoints": ["值得关注的变量1", "值得关注的变量2", "值得关注的变量3"]\n` +
+    `}\n` +
+    `phases 1-4个，actors 包含以色列/伊朗/美国（如有涉及），keySignals 2-4个，watchPoints 3个。`;
+
+  console.log(`[分析] 调用 DeepSeek 生成战局综述（基于 ${sample.length} 条事件）...`);
+  try {
+    const res = await fetch('https://api.deepseek.com/chat/completions', {
+      method: 'POST',
+      headers: { 'Authorization': `Bearer ${DEEPSEEK_TOKEN}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: 'deepseek-chat',
+        messages: [{ role: 'user', content: prompt }],
+        response_format: { type: 'json_object' },
+        temperature: 0.3,
+        max_tokens: 1500
+      }),
+      timeout: 50000
+    });
+    if (!res.ok) { console.error(`[分析] DeepSeek HTTP ${res.status}`); return loadAnalysis(); }
+
+    const json    = await res.json();
+    const content = json.choices?.[0]?.message?.content;
+    if (!content) { console.error('[分析] 空响应'); return loadAnalysis(); }
+
+    const report  = JSON.parse(content);
+    const result  = { ...report, lastUpdated: new Date().toISOString(), basedOnEvents: sample.length };
+    saveAnalysis(result);
+    console.log(`[分析] 战局综述已更新（风险等级 ${result.riskLevel}）`);
+    return result;
+  } catch (err) {
+    console.error('[分析] 生成失败:', err.message);
+    return loadAnalysis();
+  }
+}
+
 // ─── Routes ───────────────────────────────────────────────────────────────────
 
 app.use(express.static(path.join(__dirname, 'public')));
@@ -539,6 +627,22 @@ app.get('/api/retranslate', async (req, res) => {
   }
 });
 
+// Analysis routes
+app.get('/api/analysis', (req, res) => {
+  const data = loadAnalysis();
+  if (!data) return res.json(null);
+  res.json(data);
+});
+
+app.get('/api/analysis/refresh', async (req, res) => {
+  try {
+    const data = await generateSituationReport();
+    res.json(data);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // Polymarket routes
 app.get('/api/polymarket', (req, res) => {
   res.json(loadPolyCache());
@@ -586,4 +690,8 @@ app.listen(PORT, () => {
   // Prices: initial fetch after 8s, then every 15 min
   setTimeout(() => fetchMarketPrices().catch(console.error), 8000);
   setInterval(() => fetchMarketPrices().catch(console.error), 15 * 60 * 1000);
+
+  // Analysis: initial after 15s (wait for news to load first), then every 60 min
+  setTimeout(() => generateSituationReport().catch(console.error), 15000);
+  setInterval(() => generateSituationReport().catch(console.error), 60 * 60 * 1000);
 });

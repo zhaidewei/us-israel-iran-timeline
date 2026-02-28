@@ -568,6 +568,286 @@ body {
   margin: 4px auto 0;
 }
 
+/* ===== Analysis Section ===== */
+.analysis-section {
+  max-width: 900px;
+  margin: 20px auto 0;
+  padding: 0 24px;
+}
+
+.analysis-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.analysis-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.analysis-icon { font-size: 1.1rem; }
+
+.analysis-title h2 {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.analysis-badge {
+  font-size: 0.68rem;
+  font-weight: 700;
+  color: #34d399;
+  background: rgba(52,211,153,0.12);
+  border: 1px solid rgba(52,211,153,0.3);
+  border-radius: 4px;
+  padding: 1px 7px;
+  letter-spacing: 0.04em;
+}
+
+.analysis-controls {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.analysis-updated-label {
+  font-size: 0.72rem;
+  color: var(--text-muted);
+}
+
+.analysis-refresh-btn {
+  background: none;
+  border: 1px solid var(--border);
+  color: var(--text-muted);
+  font-size: 1rem;
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all var(--transition);
+}
+.analysis-refresh-btn:hover    { border-color: #34d399; color: #34d399; }
+.analysis-refresh-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+.analysis-refresh-btn.spinning { animation: spin 0.8s linear infinite; }
+
+.analysis-placeholder,
+.analysis-empty {
+  text-align: center;
+  padding: 32px;
+  color: var(--text-muted);
+  font-size: 0.85rem;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+}
+
+/* Card */
+.analysis-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 20px 22px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+/* Risk meter */
+.risk-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.risk-meter {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.risk-label-text {
+  font-size: 0.72rem;
+  color: var(--text-muted);
+  font-weight: 600;
+  letter-spacing: 0.04em;
+}
+
+.risk-dots {
+  display: flex;
+  gap: 5px;
+}
+
+.risk-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+}
+.risk-dot.active { border-color: transparent; }
+
+.risk-level-label {
+  font-size: 0.82rem;
+  font-weight: 700;
+}
+
+.analysis-meta-right {
+  font-size: 0.68rem;
+  color: var(--text-muted);
+}
+
+/* Overview */
+.analysis-overview {
+  font-size: 0.95rem;
+  line-height: 1.75;
+  color: var(--text);
+}
+
+/* Block titles */
+.analysis-block-title {
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: var(--text-muted);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  margin-bottom: -8px;
+}
+
+/* Phases */
+.analysis-phases {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 10px;
+}
+
+.analysis-phase {
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 10px 12px;
+}
+
+.phase-label {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--text);
+  margin-bottom: 2px;
+}
+
+.phase-range {
+  font-size: 0.68rem;
+  color: var(--text-muted);
+  margin-bottom: 6px;
+}
+
+.phase-summary {
+  font-size: 0.78rem;
+  color: #b0b8d8;
+  line-height: 1.55;
+}
+
+/* Actors */
+.analysis-actors {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.analysis-actor {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 10px 14px;
+  flex: 1;
+  min-width: 160px;
+}
+
+.actor-emoji { font-size: 1.3rem; line-height: 1; }
+
+.actor-name {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--text);
+  margin-bottom: 2px;
+}
+
+.actor-stance {
+  font-size: 0.75rem;
+  color: #b0b8d8;
+  line-height: 1.45;
+}
+
+/* Signals */
+.analysis-signals {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.analysis-signal {
+  display: flex;
+  gap: 8px;
+  align-items: flex-start;
+}
+
+.signal-dot {
+  color: var(--accent);
+  font-size: 0.5rem;
+  margin-top: 5px;
+  flex-shrink: 0;
+}
+
+.signal-text {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.signal-impl {
+  font-size: 0.78rem;
+  color: var(--text-muted);
+  margin-left: 4px;
+}
+
+/* Trajectory */
+.analysis-trajectory {
+  font-size: 0.88rem;
+  line-height: 1.7;
+  color: #b0b8d8;
+  border-left: 3px solid var(--accent);
+  padding-left: 12px;
+}
+
+/* Watch points */
+.analysis-watchpoints {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.watch-tag {
+  background: rgba(79,142,247,0.1);
+  border: 1px solid rgba(79,142,247,0.25);
+  color: var(--accent);
+  font-size: 0.75rem;
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-weight: 600;
+}
+
 /* ===== Polymarket Section ===== */
 .polymarket-section {
   max-width: 900px;
@@ -900,4 +1180,7 @@ body {
   .polymarket-section { padding: 0 14px; }
   .prices-grid { grid-template-columns: 1fr; }
   .prices-section { padding: 0 14px; }
+  .analysis-section { padding: 0 14px; }
+  .analysis-phases { grid-template-columns: 1fr; }
+  .analysis-actors { flex-direction: column; }
 }

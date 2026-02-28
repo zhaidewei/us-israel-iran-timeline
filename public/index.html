@@ -55,6 +55,24 @@
     </div>
   </div>
 
+  <!-- ── AI Situation Analysis ── -->
+  <section class="analysis-section" id="analysis-section">
+    <div class="analysis-header">
+      <div class="analysis-title">
+        <span class="analysis-icon">🧠</span>
+        <h2>AI 战局综述</h2>
+        <span class="analysis-badge">DeepSeek</span>
+      </div>
+      <div class="analysis-controls">
+        <span class="analysis-updated-label">更新于 <span id="analysis-updated">—</span></span>
+        <button class="analysis-refresh-btn" id="analysis-refresh-btn" onclick="refreshAnalysis()" title="重新生成">↻</button>
+      </div>
+    </div>
+    <div id="analysis-body">
+      <div class="analysis-placeholder">正在生成战局综述...</div>
+    </div>
+  </section>
+
   <!-- ── Polymarket Prediction Markets ── -->
   <section class="polymarket-section">
     <div class="poly-header">

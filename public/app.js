@@ -286,6 +286,122 @@ function setRefreshing(active) {
   document.getElementById('refresh-label').textContent = active ? '获取中...' : '刷新新闻';
 }
 
+// ─── Situation Analysis ───────────────────────────────────────────────────────
+let analysisRefreshing = false;
+
+const RISK_COLORS = ['', '#22c55e', '#84cc16', '#f59e0b', '#f97316', '#ef4444'];
+const RISK_BG     = ['', 'rgba(34,197,94,0.1)', 'rgba(132,204,22,0.1)', 'rgba(245,158,11,0.1)', 'rgba(249,115,22,0.1)', 'rgba(239,68,68,0.12)'];
+
+function renderAnalysis(data) {
+  const body = document.getElementById('analysis-body');
+  if (!data) {
+    body.innerHTML = '<div class="analysis-empty">📭 暂无综述，请点击刷新按钮生成</div>';
+    return;
+  }
+
+  const lvl   = Math.min(5, Math.max(1, data.riskLevel || 3));
+  const color = RISK_COLORS[lvl];
+  const bg    = RISK_BG[lvl];
+  const dots  = Array.from({ length: 5 }, (_, i) =>
+    `<span class="risk-dot${i < lvl ? ' active' : ''}" style="${i < lvl ? `background:${color}` : ''}"></span>`
+  ).join('');
+
+  const phasesHtml = (data.phases || []).map(p => `
+    <div class="analysis-phase">
+      <div class="phase-label">${escapeHtml(p.label)}</div>
+      <div class="phase-range">${escapeHtml(p.dateRange || '')}</div>
+      <div class="phase-summary">${escapeHtml(p.summary || '')}</div>
+    </div>`).join('');
+
+  const actorsHtml = (data.actors || []).map(a => `
+    <div class="analysis-actor">
+      <span class="actor-emoji">${escapeHtml(a.emoji || '🏳')}</span>
+      <div>
+        <div class="actor-name">${escapeHtml(a.name)}</div>
+        <div class="actor-stance">${escapeHtml(a.stance || '')}</div>
+      </div>
+    </div>`).join('');
+
+  const signalsHtml = (data.keySignals || []).map(s => `
+    <div class="analysis-signal">
+      <span class="signal-dot">●</span>
+      <div>
+        <span class="signal-text">${escapeHtml(s.signal || '')}</span>
+        ${s.implication ? `<span class="signal-impl">— ${escapeHtml(s.implication)}</span>` : ''}
+      </div>
+    </div>`).join('');
+
+  const watchHtml = (data.watchPoints || []).map(w =>
+    `<span class="watch-tag">${escapeHtml(w)}</span>`
+  ).join('');
+
+  body.innerHTML = `
+    <div class="analysis-card" style="border-color:${color}40; background: linear-gradient(135deg, ${bg}, transparent)">
+
+      <div class="risk-row">
+        <div class="risk-meter">
+          <span class="risk-label-text">冲突烈度</span>
+          <div class="risk-dots">${dots}</div>
+          <span class="risk-level-label" style="color:${color}">${escapeHtml(data.riskLabel || `L${lvl}`)}</span>
+        </div>
+        <div class="analysis-meta-right">基于 ${data.basedOnEvents || '?'} 条事件</div>
+      </div>
+
+      <p class="analysis-overview">${escapeHtml(data.overview || '')}</p>
+
+      ${phasesHtml ? `<div class="analysis-block-title">冲突阶段</div><div class="analysis-phases">${phasesHtml}</div>` : ''}
+
+      ${actorsHtml ? `<div class="analysis-block-title">各方立场</div><div class="analysis-actors">${actorsHtml}</div>` : ''}
+
+      ${signalsHtml ? `<div class="analysis-block-title">关键信号</div><div class="analysis-signals">${signalsHtml}</div>` : ''}
+
+      ${data.trajectory ? `<div class="analysis-block-title">走向研判</div><p class="analysis-trajectory">${escapeHtml(data.trajectory)}</p>` : ''}
+
+      ${watchHtml ? `<div class="analysis-block-title">关注变量</div><div class="analysis-watchpoints">${watchHtml}</div>` : ''}
+    </div>`;
+
+  if (data.lastUpdated) {
+    try {
+      const d = new Date(data.lastUpdated);
+      document.getElementById('analysis-updated').textContent =
+        d.toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit', timeZone: 'Asia/Shanghai' });
+    } catch { /* ignore */ }
+  }
+}
+
+async function loadAnalysis() {
+  try {
+    const res = await fetch('/api/analysis');
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    renderAnalysis(await res.json());
+  } catch (err) {
+    console.error('[分析] 加载失败:', err);
+    document.getElementById('analysis-body').innerHTML = '<div class="analysis-empty">⚠️ 加载失败</div>';
+  }
+}
+
+async function refreshAnalysis() {
+  if (analysisRefreshing) return;
+  analysisRefreshing = true;
+  const btn = document.getElementById('analysis-refresh-btn');
+  btn.disabled = true;
+  btn.classList.add('spinning');
+  document.getElementById('analysis-body').innerHTML = '<div class="analysis-placeholder">正在生成战局综述，约需15-30秒...</div>';
+  try {
+    const res = await fetch('/api/analysis/refresh');
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    renderAnalysis(await res.json());
+  } catch (err) {
+    console.error('[分析] 刷新失败:', err);
+    showToast('战局综述生成失败', 'error');
+    document.getElementById('analysis-body').innerHTML = '<div class="analysis-empty">⚠️ 生成失败，请重试</div>';
+  } finally {
+    analysisRefreshing = false;
+    btn.disabled = false;
+    btn.classList.remove('spinning');
+  }
+}
+
 // ─── Polymarket ───────────────────────────────────────────────────────────────
 let polyRefreshing = false;
 
@@ -587,6 +703,7 @@ function startAutoRefresh() {
 document.addEventListener('DOMContentLoaded', () => {
   loadEvents();
   startAutoRefresh();
+  loadAnalysis();
   loadPolymarket();
   startPolyAutoRefresh();
   loadPrices();
