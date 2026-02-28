@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>美以伊战争时间线</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <!-- ── Header ── -->
+  <header class="header">
+    <div class="header-inner">
+      <div class="header-title">
+        <h1>🌍 美以伊战争时间线</h1>
+        <p class="header-subtitle">美国 · 以色列 vs 伊朗 — 实时冲突追踪</p>
+      </div>
+      <div class="header-controls">
+        <div class="event-badge">
+          <span class="badge-label">已追踪事件</span>
+          <span class="badge-count" id="event-count">—</span>
+        </div>
+        <button class="refresh-btn" id="refresh-btn" onclick="manualRefresh()">
+          <span class="refresh-icon" id="refresh-icon">↻</span>
+          <span id="refresh-label">刷新新闻</span>
+        </button>
+      </div>
+    </div>
+    <div class="last-updated" id="last-updated">正在加载...</div>
+  </header>
+
+  <!-- ── Breaking News Banner (hidden until imp=5 event exists) ── -->
+  <div class="breaking-banner" id="breaking-banner" style="display:none">
+    <span class="breaking-label">⚡ 突发</span>
+    <span class="breaking-text" id="breaking-text"></span>
+    <a class="breaking-link" id="breaking-link" target="_blank" rel="noopener">查看 →</a>
+    <button class="breaking-close" onclick="dismissBreaking()">✕</button>
+  </div>
+
+  <!-- ── Source Legend + Filter Bar ── -->
+  <div class="meta-bar">
+    <div class="source-legend">
+      <span class="legend-title">来源：</span>
+      <span class="legend-item bbc">● BBC中东</span>
+      <span class="legend-item aljazeera">● 半岛电视台</span>
+      <span class="legend-item toi">● 以色列时报</span>
+      <span class="legend-item guardian">● 卫报</span>
+      <span class="legend-item jpost">● 耶路撒冷邮报</span>
+      <span class="legend-item france24">● France 24</span>
+      <span class="legend-item mee">● 中东眼</span>
+    </div>
+    <div class="filter-row">
+      <div class="filter-bar" id="filter-bar"></div>
+      <button class="filter-clear" id="filter-clear" onclick="clearFilters()" style="display:none">× 清除筛选</button>
+    </div>
+  </div>
+
+  <!-- ── Polymarket Prediction Markets ── -->
+  <section class="polymarket-section">
+    <div class="poly-header">
+      <div class="poly-title">
+        <span class="poly-icon">📊</span>
+        <h2>预测市场赔率</h2>
+        <span class="poly-badge">Polymarket</span>
+      </div>
+      <div class="poly-controls">
+        <span class="poly-updated-label">更新于 <span id="poly-updated">—</span></span>
+        <button class="poly-refresh-btn" id="poly-refresh-btn" onclick="refreshPolymarket()" title="刷新">↻</button>
+      </div>
+    </div>
+    <div class="poly-grid" id="poly-grid">
+      <div class="poly-placeholder">正在加载预测数据...</div>
+    </div>
+  </section>
+
+  <!-- ── Market Prices ── -->
+  <section class="prices-section">
+    <div class="prices-header">
+      <div class="prices-title">
+        <span class="prices-icon">📈</span>
+        <h2>市场行情</h2>
+      </div>
+      <div class="prices-controls">
+        <span class="prices-updated-label">更新于 <span id="prices-updated">—</span></span>
+        <button class="prices-refresh-btn" id="prices-refresh-btn" onclick="refreshPrices()" title="刷新行情">↻</button>
+      </div>
+    </div>
+    <div class="prices-grid" id="prices-grid">
+      <div class="prices-placeholder">正在加载行情数据...</div>
+    </div>
+  </section>
+
+  <hr class="section-divider">
+
+  <!-- ── Timeline ── -->
+  <main class="timeline-container" id="timeline-container">
+    <div class="loading-state" id="loading-state">
+      <div class="spinner"></div>
+      <p>正在加载事件...</p>
+    </div>
+    <div class="empty-state" id="empty-state" style="display:none">
+      <p>📡 暂无事件。点击「刷新新闻」获取最新报道。</p>
+    </div>
+    <div class="timeline" id="timeline"></div>
+  </main>
+
+  <!-- ── Footer ── -->
+  <footer class="footer">
+    <p>数据来源：BBC、半岛电视台、以色列时报、卫报、耶路撒冷邮报、France 24、中东眼 RSS 订阅 · 每10分钟自动更新 · 翻译 DeepL · 分析 DeepSeek</p>
+  </footer>
+
+  <!-- ── Toast Container (fixed) ── -->
+  <div class="toast-container" id="toast-container"></div>
+
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
