@@ -40,7 +40,9 @@ const ACTION_KEYWORDS = [
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
 function isWarRelated(item) {
-  const text = `${item.title || ''} ${item.contentSnippet || ''} ${item.content || ''}`.toLowerCase();
+  // 只用 title + contentSnippet（纯文本），不用 item.content（含 HTML 和内链 URL）
+  // 防止文章 HTML 里嵌套的内链 URL 带入无关关键词导致误匹配
+  const text = `${item.title || ''} ${item.contentSnippet || ''}`.toLowerCase();
   return GEO_KEYWORDS.some(kw => text.includes(kw)) &&
          ACTION_KEYWORDS.some(kw => text.includes(kw));
 }
