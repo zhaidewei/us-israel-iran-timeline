@@ -283,7 +283,7 @@ function setRefreshing(active) {
   isRefreshing = active;
   document.getElementById('refresh-btn').disabled   = active;
   document.getElementById('refresh-icon').classList.toggle('spinning', active);
-  document.getElementById('refresh-label').textContent = active ? '获取中...' : '刷新新闻';
+  document.getElementById('refresh-label').textContent = active ? '加载中...' : '重新加载';
 }
 
 // ─── Situation Analysis ───────────────────────────────────────────────────────
@@ -386,15 +386,16 @@ async function refreshAnalysis() {
   const btn = document.getElementById('analysis-refresh-btn');
   btn.disabled = true;
   btn.classList.add('spinning');
-  document.getElementById('analysis-body').innerHTML = '<div class="analysis-placeholder">正在生成战局综述，约需15-30秒...</div>';
+  document.getElementById('analysis-body').innerHTML = '<div class="analysis-placeholder">正在加载战局综述...</div>';
   try {
-    const res = await fetch('/api/analysis/refresh');
+    // 读取 KV 缓存（分析由 GitHub Actions 每小时自动生成）
+    const res = await fetch('/api/analysis');
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     renderAnalysis(await res.json());
   } catch (err) {
     console.error('[分析] 刷新失败:', err);
-    showToast('战局综述生成失败', 'error');
-    document.getElementById('analysis-body').innerHTML = '<div class="analysis-empty">⚠️ 生成失败，请重试</div>';
+    showToast('战局综述加载失败', 'error');
+    document.getElementById('analysis-body').innerHTML = '<div class="analysis-empty">⚠️ 加载失败，请重试</div>';
   } finally {
     analysisRefreshing = false;
     btn.disabled = false;
@@ -670,12 +671,13 @@ async function refreshEvents(isAuto = false) {
   if (isRefreshing) return;
   setRefreshing(true);
   try {
-    const res  = await fetch('/api/refresh');
+    // 读取 KV 缓存（数据由 GitHub Actions 每小时更新）
+    const res  = await fetch('/api/events');
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const data = await res.json();
     const incoming = data.events || [];
 
-    // Detect genuinely new events
+    // 检测是否有新事件（GitHub Actions 可能刚写入了新数据）
     const newCount = incoming.filter(e => !lastEventIds.has(e.id)).length;
 
     allEvents    = incoming;
