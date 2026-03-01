@@ -1,10 +1,10 @@
 name: Update Timeline Data
 
 on:
-  schedule:
-    # 每小时整点运行一次（UTC），对应北京时间每小时
-    - cron: '0 * * * *'
-  workflow_dispatch:  # 支持手动触发（首次部署后用来初始化数据）
+  # 定时任务已禁用 — 改由本机 launchd 每小时执行（避免 GitHub Actions 版本与本地不同步导致数据损坏）
+  # schedule:
+  #   - cron: '0 * * * *'
+  workflow_dispatch:  # 保留手动触发入口，仅在需要时使用
 
 jobs:
   update:
