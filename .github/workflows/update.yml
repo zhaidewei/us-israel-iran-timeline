@@ -25,7 +25,10 @@ jobs:
       - name: Run data update
         run: node scripts/update.js
         env:
-          DEEPL_TOKEN:          ${{ secrets.DEEPL_TOKEN }}
-          DEEPSEEK_API_TOKEN:   ${{ secrets.DEEPSEEK_API_TOKEN }}
-          KV_REST_API_URL:      ${{ secrets.KV_REST_API_URL }}
-          KV_REST_API_TOKEN:    ${{ secrets.KV_REST_API_TOKEN }}
+          DEEPL_TOKEN:                ${{ secrets.DEEPL_TOKEN }}
+          DEEPSEEK_API_TOKEN:         ${{ secrets.DEEPSEEK_API_TOKEN }}
+          # 支持 Vercel KV 和 Upstash Redis 两种变量名，填其中一组即可
+          KV_REST_API_URL:            ${{ secrets.KV_REST_API_URL }}
+          KV_REST_API_TOKEN:          ${{ secrets.KV_REST_API_TOKEN }}
+          UPSTASH_REDIS_REST_URL:     ${{ secrets.UPSTASH_REDIS_REST_URL }}
+          UPSTASH_REDIS_REST_TOKEN:   ${{ secrets.UPSTASH_REDIS_REST_TOKEN }}
