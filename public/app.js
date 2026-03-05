@@ -294,7 +294,11 @@ function renderDayNav(days) {
     buttons.forEach(b => {
       const isActive = b.dataset.targetId === activeId;
       b.classList.toggle('active', isActive);
-      if (isActive) b.scrollIntoView({ inline: 'nearest', block: 'nearest' });
+      if (isActive) {
+        // 仅在 nav 内水平滚动，不触发页面垂直滚动
+        const target = Math.max(0, b.offsetLeft - (nav.clientWidth - b.offsetWidth) / 2);
+        nav.scrollLeft = target;
+      }
     });
   };
 

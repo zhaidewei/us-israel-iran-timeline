@@ -17,6 +17,9 @@
   --jpost-color: #818cf8;
   --france24-color: #f472b6;
   --mee-color: #2dd4bf;
+  --presstv-color: #34d399;
+  --irna-color:    #fb923c;
+  --tass-color:    #f472b6;
 
   --radius: 10px;
   --transition: 0.2s ease;
@@ -211,6 +214,9 @@ body {
 .legend-item.jpost    { color: var(--jpost-color); }
 .legend-item.france24 { color: var(--france24-color); }
 .legend-item.mee      { color: var(--mee-color); }
+.legend-item.presstv  { color: var(--presstv-color); }
+.legend-item.irna     { color: var(--irna-color); }
+.legend-item.tass     { color: var(--tass-color); }
 
 /* ===== Filter Bar ===== */
 .filter-row {
@@ -408,6 +414,9 @@ body {
 .event-card.jpost    { border-left: 3px solid var(--jpost-color); }
 .event-card.france24 { border-left: 3px solid var(--france24-color); }
 .event-card.mee      { border-left: 3px solid var(--mee-color); }
+.event-card.presstv  { border-left: 3px solid var(--presstv-color); }
+.event-card.irna     { border-left: 3px solid var(--irna-color); }
+.event-card.tass     { border-left: 3px solid var(--tass-color); }
 
 .event-card.bbc::before      { background: var(--bbc-color); }
 .event-card.aljazeera::before{ background: var(--aljazeera-color); }
@@ -416,6 +425,9 @@ body {
 .event-card.jpost::before    { background: var(--jpost-color); }
 .event-card.france24::before { background: var(--france24-color); }
 .event-card.mee::before      { background: var(--mee-color); }
+.event-card.presstv::before  { background: var(--presstv-color); }
+.event-card.irna::before     { background: var(--irna-color); }
+.event-card.tass::before     { background: var(--tass-color); }
 
 /* Card meta row */
 .card-meta {
@@ -441,6 +453,9 @@ body {
 .jpost .source-tag    { background: rgba(129,140,248,0.18); color: var(--jpost-color); }
 .france24 .source-tag { background: rgba(244,114,182,0.18); color: var(--france24-color); }
 .mee .source-tag      { background: rgba(45,212,191,0.18);  color: var(--mee-color); }
+.presstv .source-tag  { background: rgba(52,211,153,0.18);  color: var(--presstv-color); }
+.irna .source-tag     { background: rgba(251,146,60,0.18);  color: var(--irna-color); }
+.tass .source-tag     { background: rgba(244,114,182,0.18); color: var(--tass-color); }
 
 /* ===== Category Tags ===== */
 .category-tag {

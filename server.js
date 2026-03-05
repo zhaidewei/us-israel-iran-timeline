@@ -5,7 +5,7 @@ const fs = require('fs');
 const path = require('path');
 
 const app = express();
-const parser = new Parser({ timeout: 10000 });
+const parser = new Parser({ timeout: 10000, headers: { 'User-Agent': 'Mozilla/5.0 (compatible; timeline-bot/1.0)' } });
 const EVENTS_FILE     = path.join(__dirname, 'events.json');
 const POLYMARKET_FILE = path.join(__dirname, 'polymarket.json');
 const PRICES_FILE     = path.join(__dirname, 'prices.json');
@@ -28,6 +28,11 @@ const RSS_FEEDS = [
   { name: '耶路撒冷邮报', nameKey: 'jpost',    url: 'https://www.jpost.com/Rss/RssFeedsHeadlines.aspx' },
   { name: 'France 24',    nameKey: 'france24', url: 'https://www.france24.com/en/middle-east/rss' },
   { name: '中东眼',       nameKey: 'mee',      url: 'https://www.middleeasteye.net/rss' },
+  // 伊朗方面
+  { name: 'Press TV',     nameKey: 'presstv',  url: 'https://www.presstv.ir/rss.xml' },
+  { name: 'IFP News',     nameKey: 'irna',     url: 'https://ifpnews.com/feed' },
+  // 俄罗斯方面
+  { name: 'TASS',         nameKey: 'tass',     url: 'https://tass.com/rss/v2.xml' },
 ];
 
 const GEO_KEYWORDS = [

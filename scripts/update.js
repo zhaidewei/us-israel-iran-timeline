@@ -12,7 +12,7 @@ const { fetchMarketPrices }   = require('../lib/prices');
 const DEEPL_TOKEN    = process.env.DEEPL_TOKEN;
 const DEEPSEEK_TOKEN = process.env.DEEPSEEK_API_TOKEN;
 
-const parser = new Parser({ timeout: 10000 });
+const parser = new Parser({ timeout: 10000, headers: { 'User-Agent': 'Mozilla/5.0 (compatible; timeline-bot/1.0)' } });
 
 // ─── RSS Config ───────────────────────────────────────────────────────────────
 
@@ -24,6 +24,10 @@ const RSS_FEEDS = [
   { name: '耶路撒冷邮报', nameKey: 'jpost',    url: 'https://www.jpost.com/Rss/RssFeedsHeadlines.aspx' },
   { name: 'France 24',    nameKey: 'france24', url: 'https://www.france24.com/en/middle-east/rss' },
   { name: '中东眼',       nameKey: 'mee',      url: 'https://www.middleeasteye.net/rss' },
+  // 伊朗方面
+  { name: 'Press TV',     nameKey: 'presstv',  url: 'https://www.presstv.ir/rss.xml' },
+  // 俄罗斯方面
+  { name: 'TASS',         nameKey: 'tass',     url: 'https://tass.com/rss/v2.xml' },
 ];
 
 const GEO_KEYWORDS = [
