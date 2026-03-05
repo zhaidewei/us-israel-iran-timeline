@@ -321,6 +321,7 @@ body {
 /* ===== Day Navigation ===== */
 .day-nav {
   position: sticky;
+  top: 0;
   z-index: 90;
   display: none;
   gap: 6px;

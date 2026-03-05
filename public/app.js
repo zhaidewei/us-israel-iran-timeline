@@ -263,7 +263,6 @@ function renderDayNav(days) {
 
   if (days.length < 2) { nav.style.display = 'none'; return; }
   nav.style.display = 'flex';
-  nav.style.top = document.querySelector('.header').offsetHeight + 'px';
 
   days.forEach(({ label, id }, i) => {
     const btn = document.createElement('button');
@@ -274,7 +273,6 @@ function renderDayNav(days) {
       const target = document.getElementById(id);
       if (!target) return;
       const top = target.getBoundingClientRect().top + window.scrollY
-                  - document.querySelector('.header').offsetHeight
                   - nav.offsetHeight - 8;
       window.scrollTo({ top, behavior: 'smooth' });
     });
@@ -284,7 +282,7 @@ function renderDayNav(days) {
   const buttons = Array.from(nav.querySelectorAll('.day-nav-btn'));
 
   const updateActive = () => {
-    const threshold = document.querySelector('.header').offsetHeight + nav.offsetHeight + 20;
+    const threshold = nav.offsetHeight + 20;
     let activeId = buttons[0]?.dataset.targetId;
     for (const btn of buttons) {
       const el = document.getElementById(btn.dataset.targetId);
