@@ -209,7 +209,13 @@ function buildClusterBlock(articles) {
   return wrapper;
 }
 
-// ─── Timeline Rendering ───────────────────────────────────────────────────────
+// ─── Timeline Rendering (paginated) ──────────────────────────────────────────
+const PAGE_SIZE = 20;
+let currentClusters = [];
+let renderedClusterCount = 0;
+let renderedDays = [];
+let dayCounter = 0;
+
 function renderTimeline(filteredEvents) {
   const timeline   = document.getElementById('timeline');
   const emptyState = document.getElementById('empty-state');
@@ -221,24 +227,38 @@ function renderTimeline(filteredEvents) {
         ? '🔍 没有符合筛选条件的事件。'
         : '📡 暂无事件。点击「刷新新闻」获取最新报道。';
     timeline.innerHTML = '';
+    currentClusters = [];
+    renderedClusterCount = 0;
+    renderedDays = [];
+    dayCounter = 0;
     renderDayNav([]);
     return;
   }
 
   emptyState.style.display = 'none';
   timeline.innerHTML = '';
+  currentClusters = groupByClusters(filteredEvents);
+  renderedClusterCount = 0;
+  renderedDays = [];
+  dayCounter = 0;
+  appendMoreClusters();
+}
 
-  const clusters = groupByClusters(filteredEvents);
-  let lastDateLabel = '';
-  const days = [];
-  let dayIndex = 0;
+function appendMoreClusters() {
+  const timeline = document.getElementById('timeline');
 
-  clusters.forEach(cluster => {
+  // Remove existing load-more button
+  document.getElementById('load-more-btn')?.remove();
+
+  const batch = currentClusters.slice(renderedClusterCount, renderedClusterCount + PAGE_SIZE);
+  let lastDateLabel = renderedDays.length ? renderedDays[renderedDays.length - 1].label : '';
+
+  batch.forEach(cluster => {
     const label = getDateLabel(cluster[0].pubDate);
     if (label !== lastDateLabel) {
       lastDateLabel = label;
-      const id = `day-divider-${dayIndex++}`;
-      days.push({ label, id });
+      const id = `day-divider-${dayCounter++}`;
+      renderedDays.push({ label, id });
       const divider = document.createElement('div');
       divider.className = 'date-divider';
       divider.id = id;
@@ -248,7 +268,18 @@ function renderTimeline(filteredEvents) {
     timeline.appendChild(buildClusterBlock(cluster));
   });
 
-  renderDayNav(days);
+  renderedClusterCount += batch.length;
+  renderDayNav(renderedDays);
+
+  if (renderedClusterCount < currentClusters.length) {
+    const remaining = currentClusters.length - renderedClusterCount;
+    const btn = document.createElement('button');
+    btn.id = 'load-more-btn';
+    btn.className = 'load-more-btn';
+    btn.textContent = `加载更多（还有 ${remaining} 条）`;
+    btn.addEventListener('click', appendMoreClusters);
+    timeline.appendChild(btn);
+  }
 }
 
 // ─── Day Navigation ───────────────────────────────────────────────────────────
