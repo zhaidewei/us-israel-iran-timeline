@@ -872,22 +872,24 @@ document.addEventListener('DOMContentLoaded', () => {
   startPricesAutoRefresh();
 });
 
-// ── Donate Modal ──
+// ── Donate Choice Modal ──
 function openDonateModal() {
-  document.getElementById('donate-wechat').style.display = 'none';
-  document.getElementById('donate-overlay').classList.add('open');
+  const overlay = document.getElementById('donate-overlay');
+  if (!overlay) return;
+  overlay.classList.add('open');
 }
 function closeDonateModal(e) {
-  if (e && e.target !== document.getElementById('donate-overlay')) return;
-  document.getElementById('donate-overlay').classList.remove('open');
-  closeWechatPreview();
+  const overlay = document.getElementById('donate-overlay');
+  if (!overlay) return;
+  if (e && e.target !== overlay) return;
+  overlay.classList.remove('open');
 }
-function showWechat() {
-  document.getElementById('donate-wechat').style.display = 'block';
+function openWechatFromDonate() {
+  closeDonateModal();
+  openWechatPreview();
 }
-function openWechatSinglePage() {
-  window.location.href = 'wechat-pay.html';
-}
+
+// ── WeChat QR Preview ──
 function openWechatPreview() {
   const overlay = document.getElementById('qr-preview-overlay');
   if (!overlay) return;
