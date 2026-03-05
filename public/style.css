@@ -360,7 +360,25 @@ body {
 }
 
 .legend-title { color: var(--text-muted); }
-.legend-item  { font-weight: 600; }
+
+/* legend items are now buttons */
+.legend-item {
+  font-weight: 600;
+  background: none;
+  border: none;
+  font-family: inherit;
+  font-size: inherit;
+  cursor: pointer;
+  padding: 2px 6px;
+  border-radius: 6px;
+  opacity: 0.45;
+  transition: opacity 0.15s, background 0.15s;
+}
+.legend-item:hover { opacity: 0.8; }
+.legend-item.active { opacity: 1; background: rgba(255,255,255,0.07); }
+/* when nothing is selected, show all at full opacity */
+#source-legend:not(.has-selection) .legend-item { opacity: 1; background: none; }
+
 .legend-item.bbc      { color: var(--bbc-color); }
 .legend-item.aljazeera{ color: var(--aljazeera-color); }
 .legend-item.toi      { color: var(--toi-color); }
@@ -371,6 +389,20 @@ body {
 .legend-item.presstv  { color: var(--presstv-color); }
 .legend-item.irna     { color: var(--irna-color); }
 .legend-item.tass     { color: var(--tass-color); }
+
+.legend-all-btn {
+  background: none;
+  border: 1px solid var(--border);
+  color: var(--text-muted);
+  font-family: inherit;
+  font-size: 0.78rem;
+  cursor: pointer;
+  padding: 2px 8px;
+  border-radius: 6px;
+  transition: border-color 0.15s, color 0.15s;
+}
+.legend-all-btn:hover,
+.legend-all-btn.active { border-color: var(--text); color: var(--text); }
 
 /* ===== Filter Bar ===== */
 .filter-row {

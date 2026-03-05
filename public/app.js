@@ -92,9 +92,65 @@ function dismissBreaking() {
 // ─── Filter Bar ───────────────────────────────────────────────────────────────
 const CATEGORY_ORDER = ['军事打击', '防空拦截', '人员伤亡', '外交动向', '制裁经济', '内政局势', '其他'];
 
+// source name → CSS key mapping
+const SOURCE_KEY_MAP = {
+  'BBC中东': 'bbc', '半岛电视台': 'aljazeera', '以色列时报': 'toi',
+  '卫报': 'guardian', '耶路撒冷邮报': 'jpost', 'France 24': 'france24',
+  '中东眼': 'mee', 'Press TV': 'presstv', 'TASS': 'tass',
+};
+
+function buildSourceLegend(events) {
+  const sources = new Set(events.map(e => e.source).filter(Boolean));
+  const container = document.getElementById('source-legend');
+  // keep the title span, rebuild the rest
+  container.innerHTML = '<span class="legend-title">来源：</span>';
+
+  // "全选" button
+  const allBtn = document.createElement('button');
+  allBtn.className = 'legend-all-btn';
+  allBtn.id = 'legend-all-btn';
+  allBtn.textContent = '全选';
+  allBtn.onclick = () => {
+    activeSources.clear();
+    updateClearButton();
+    renderTimeline(getFilteredEvents());
+    refreshLegendState();
+  };
+  container.appendChild(allBtn);
+
+  // one clickable item per source
+  sources.forEach(src => {
+    const key = SOURCE_KEY_MAP[src] || '';
+    const btn = document.createElement('button');
+    btn.className = `legend-item ${key}`;
+    btn.dataset.source = src;
+    btn.innerHTML = `● ${src}`;
+    btn.onclick = () => {
+      if (activeSources.has(src)) activeSources.delete(src);
+      else activeSources.add(src);
+      updateClearButton();
+      renderTimeline(getFilteredEvents());
+      refreshLegendState();
+    };
+    container.appendChild(btn);
+  });
+  refreshLegendState();
+}
+
+function refreshLegendState() {
+  const allBtn = document.getElementById('legend-all-btn');
+  if (!allBtn) return;
+  const anyActive = activeSources.size > 0;
+  allBtn.classList.toggle('active', !anyActive);
+  const legend = document.getElementById('source-legend');
+  legend.classList.toggle('has-selection', anyActive);
+  document.querySelectorAll('#source-legend .legend-item').forEach(btn => {
+    btn.classList.toggle('active', activeSources.has(btn.dataset.source));
+  });
+}
+
 function buildFilterBar(events) {
   const categories = new Set(events.map(e => e.category).filter(Boolean));
-  const sources    = new Set(events.map(e => e.source).filter(Boolean));
   const bar = document.getElementById('filter-bar');
   bar.innerHTML = '';
 
@@ -105,16 +161,6 @@ function buildFilterBar(events) {
     bar.appendChild(lbl);
     CATEGORY_ORDER.filter(c => categories.has(c)).forEach(cat =>
       bar.appendChild(makeFilterChip(cat, activeCategories))
-    );
-  }
-
-  if (sources.size) {
-    const lbl = document.createElement('span');
-    lbl.className = 'filter-label filter-label-source';
-    lbl.textContent = '来源';
-    bar.appendChild(lbl);
-    Array.from(sources).forEach(src =>
-      bar.appendChild(makeFilterChip(src, activeSources))
     );
   }
   updateClearButton();
@@ -136,7 +182,8 @@ function makeFilterChip(label, set) {
 function clearFilters() {
   activeCategories.clear();
   activeSources.clear();
-  buildFilterBar(allEvents);       // rebuild chips (all deactivated)
+  buildFilterBar(allEvents);
+  refreshLegendState();
   renderTimeline(getFilteredEvents());
 }
 
@@ -358,6 +405,7 @@ function renderDayNav(days) {
 function renderAll(events) {
   document.getElementById('loading-state').style.display = 'none';
   updateBreakingBanner(events);
+  buildSourceLegend(events);
   buildFilterBar(events);
   renderTimeline(getFilteredEvents());
 }
