@@ -5,6 +5,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>美以伊战争时间线</title>
   <link rel="stylesheet" href="style.css">
+  <script>
+    (function(){const t=localStorage.getItem('theme');if(t==='light')document.documentElement.classList.add('light');})();
+  </script>
 </head>
 <body>
 
@@ -12,7 +15,7 @@
   <header class="header">
     <div class="header-inner">
       <div class="header-title">
-        <h1>🌍 美以伊战争时间线</h1>
+        <h1>🌍 <span class="h1-text">美以伊战争时间线</span></h1>
         <p class="header-subtitle">美国 · 以色列 vs 伊朗 — 实时冲突追踪</p>
       </div>
       <div class="header-controls">
@@ -20,7 +23,8 @@
           <span class="badge-label">已追踪事件</span>
           <span class="badge-count" id="event-count">—</span>
         </div>
-        <a class="kofi-btn" href="https://ko-fi.com/deweizhai" target="_blank" rel="noopener">☕ 请我喝咖啡</a>
+        <button class="theme-toggle-btn" id="theme-toggle" onclick="toggleTheme()" title="切换主题">🌙</button>
+        <a class="kofi-btn" href="https://ko-fi.com/deweizhai" target="_blank" rel="noopener">🍗 给作者加鸡腿</a>
         <button class="refresh-btn" id="refresh-btn" onclick="manualRefresh()">
           <span class="refresh-icon" id="refresh-icon">↻</span>
           <span id="refresh-label">重新加载</span>
@@ -41,9 +45,11 @@
 
   <!-- ── Breaking News Banner (hidden until imp=5 event exists) ── -->
   <div class="breaking-banner" id="breaking-banner" style="display:none">
-    <span class="breaking-label">⚡ 突发</span>
-    <span class="breaking-text" id="breaking-text"></span>
-    <a class="breaking-link" id="breaking-link" target="_blank" rel="noopener">查看 →</a>
+    <div class="breaking-content">
+      <span class="breaking-label" id="breaking-label">⚡ 突发</span>
+      <span class="breaking-text" id="breaking-text"></span>
+      <a class="breaking-link" id="breaking-link" target="_blank" rel="noopener">查看 →</a>
+    </div>
     <button class="breaking-close" onclick="dismissBreaking()">✕</button>
   </div>
 

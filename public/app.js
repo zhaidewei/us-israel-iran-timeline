@@ -1,3 +1,17 @@
+// ─── Theme ────────────────────────────────────────────────────────────────────
+function toggleTheme() {
+  const isLight = document.documentElement.classList.toggle('light');
+  localStorage.setItem('theme', isLight ? 'light' : 'dark');
+  const btn = document.getElementById('theme-toggle');
+  if (btn) btn.textContent = isLight ? '☀️' : '🌙';
+}
+
+(function initTheme() {
+  const isLight = document.documentElement.classList.contains('light');
+  const btn = document.getElementById('theme-toggle');
+  if (btn) btn.textContent = isLight ? '☀️' : '🌙';
+})();
+
 // ─── State ────────────────────────────────────────────────────────────────────
 const AUTO_REFRESH_MS = 10 * 60 * 1000;
 let isRefreshing    = false;
@@ -96,7 +110,7 @@ function buildFilterBar(events) {
 
   if (sources.size) {
     const lbl = document.createElement('span');
-    lbl.className = 'filter-label';
+    lbl.className = 'filter-label filter-label-source';
     lbl.textContent = '来源';
     bar.appendChild(lbl);
     Array.from(sources).forEach(src =>

@@ -25,6 +25,72 @@
   --transition: 0.2s ease;
 }
 
+/* ===== Light Mode ===== */
+html.light {
+  --bg: #f0f2f8;
+  --surface: #ffffff;
+  --surface2: #e6e9f5;
+  --border: #c8cee0;
+  --text: #1a1d2e;
+  --text-muted: #5a6385;
+  --accent: #2563eb;
+}
+
+html.light .header {
+  background: linear-gradient(135deg, #e0e5f5 0%, #d0d7ef 100%);
+}
+
+html.light .header h1 .h1-text {
+  background: none;
+  -webkit-background-clip: initial;
+  -webkit-text-fill-color: initial;
+  background-clip: initial;
+  color: #1e3a8a;
+}
+
+html.light .breaking-banner.breaking-mode {
+  background: linear-gradient(90deg, #dc2626, #ef4444);
+  border-bottom: 1px solid #b91c1c;
+}
+
+html.light .breaking-banner.breaking-mode .breaking-label { color: #fff; }
+html.light .breaking-banner.breaking-mode .breaking-text  { color: #fff; }
+html.light .breaking-banner.breaking-mode .breaking-link  { color: #fff; border-color: rgba(255,255,255,0.5); }
+html.light .breaking-banner.breaking-mode .breaking-close { color: #fff; }
+
+html.light .day-nav {
+  background: rgba(240, 242, 248, 0.94);
+}
+
+html.light .summary-zh,
+html.light .phase-summary,
+html.light .actor-stance,
+html.light .analysis-trajectory {
+  color: #4a5070;
+}
+
+html.light .breaking-banner.pinned-mode {
+  background: #e6e9f5;
+}
+
+/* ===== Theme Toggle Button ===== */
+.theme-toggle-btn {
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  width: 38px;
+  height: 38px;
+  font-size: 1.1rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background var(--transition), border-color var(--transition), transform var(--transition);
+  flex-shrink: 0;
+}
+.theme-toggle-btn:hover  { border-color: var(--accent); }
+.theme-toggle-btn:active { transform: scale(0.93); }
+
 body {
   background: var(--bg);
   color: var(--text);
@@ -54,6 +120,9 @@ body {
   font-size: 1.5rem;
   font-weight: 700;
   letter-spacing: 0.02em;
+}
+
+.header h1 .h1-text {
   background: linear-gradient(90deg, #e8eaf0, #8ab4f8);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
@@ -174,11 +243,14 @@ body {
 
 /* ===== Breaking / Pinned Banner ===== */
 .breaking-banner {
-  padding: 10px 24px;
+  position: relative;
+  padding: 10px 52px;
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: 12px;
   flex-wrap: wrap;
+  text-align: center;
 }
 
 /* 8小时内：红幅突发 */
@@ -214,8 +286,15 @@ body {
 .breaking-banner.breaking-mode .breaking-text { color: #fee2e2; }
 .breaking-banner.pinned-mode   .breaking-text { color: var(--text); }
 
+.breaking-content {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
 .breaking-text {
-  flex: 1;
   font-size: 0.92rem;
   font-weight: 600;
   line-height: 1.4;
@@ -246,6 +325,10 @@ body {
 .breaking-banner.breaking-mode .breaking-close { color: #fca5a5; }
 .breaking-banner.pinned-mode   .breaking-close { color: var(--text-muted); }
 .breaking-close {
+  position: absolute;
+  right: 16px;
+  top: 50%;
+  transform: translateY(-50%);
   background: none;
   border: none;
   font-size: 1rem;
@@ -311,6 +394,7 @@ body {
   white-space: nowrap;
 }
 .filter-label:first-child { margin-left: 0; }
+.filter-label-source { flex-basis: 100%; margin-left: 0; margin-top: 4px; }
 
 .filter-chip {
   background: var(--surface2);
