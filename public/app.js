@@ -880,7 +880,19 @@ function openDonateModal() {
 function closeDonateModal(e) {
   if (e && e.target !== document.getElementById('donate-overlay')) return;
   document.getElementById('donate-overlay').classList.remove('open');
+  closeWechatPreview();
 }
 function showWechat() {
   document.getElementById('donate-wechat').style.display = 'block';
+}
+function openWechatPreview() {
+  const overlay = document.getElementById('qr-preview-overlay');
+  if (!overlay) return;
+  overlay.classList.add('open');
+}
+function closeWechatPreview(e) {
+  const overlay = document.getElementById('qr-preview-overlay');
+  if (!overlay) return;
+  if (e && e.target !== overlay) return;
+  overlay.classList.remove('open');
 }

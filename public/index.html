@@ -155,11 +155,17 @@
         </a>
       </div>
       <div class="donate-wechat" id="donate-wechat" style="display:none">
-        <img src="wechat-pay.jpg" alt="微信收款码" id="wechat-qr-img" />
+        <img src="wechat-pay.jpg" alt="微信收款码" id="wechat-qr-img" onclick="openWechatPreview()" />
+        <p class="donate-preview-tip">🔍 点图片可全屏预览，再长按识别</p>
         <p class="donate-scan-tip">📱 手机用户：在<strong>微信内</strong>长按图片可识别二维码</p>
         <a class="donate-save-link" href="wechat-pay.jpg" download="wechat-pay.jpg">💾 保存二维码到相册</a>
       </div>
     </div>
+  </div>
+
+  <div class="qr-preview-overlay" id="qr-preview-overlay" onclick="closeWechatPreview(event)">
+    <button class="qr-preview-close" onclick="closeWechatPreview()">✕</button>
+    <img src="wechat-pay.jpg" alt="微信收款码大图预览" id="qr-preview-img" />
   </div>
 
   <!-- ── Toast Container (fixed) ── -->

@@ -869,7 +869,9 @@ body {
   height: 200px;
   object-fit: contain;
   border-radius: 8px;
+  cursor: zoom-in;
 }
+.donate-preview-tip { margin: 8px 0 0; font-size: 0.8rem; color: var(--text-muted); }
 .donate-scan-tip { margin: 10px 0 4px; font-size: 0.82rem; color: var(--text-muted); }
 .donate-scan-tip strong { color: var(--text); }
 .donate-save-link {
@@ -878,6 +880,39 @@ body {
   font-size: 0.8rem;
   color: var(--text-muted);
   text-decoration: underline;
+}
+
+.qr-preview-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  z-index: 9500;
+  background: rgba(0,0,0,0.88);
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+.qr-preview-overlay.open { display: flex; }
+.qr-preview-overlay img {
+  width: min(92vw, 560px);
+  max-height: 88vh;
+  object-fit: contain;
+  border-radius: 10px;
+  background: #fff;
+}
+.qr-preview-close {
+  position: fixed;
+  top: 16px;
+  right: 16px;
+  width: 38px;
+  height: 38px;
+  border: 1px solid rgba(255,255,255,0.35);
+  border-radius: 999px;
+  background: rgba(0,0,0,0.35);
+  color: #fff;
+  font-size: 1rem;
+  line-height: 1;
+  cursor: pointer;
 }
 
 /* ===== Section Divider ===== */
