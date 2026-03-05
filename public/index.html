@@ -24,7 +24,7 @@
           <span class="badge-count" id="event-count">—</span>
         </div>
         <button class="theme-toggle-btn" id="theme-toggle" onclick="toggleTheme()" title="切换主题">🌙</button>
-        <a class="kofi-btn" href="https://ko-fi.com/deweizhai" target="_blank" rel="noopener">🍗 给作者加鸡腿</a>
+        <button class="kofi-btn" onclick="openDonateModal()">🍗 给作者加鸡腿</button>
         <button class="refresh-btn" id="refresh-btn" onclick="manualRefresh()">
           <span class="refresh-icon" id="refresh-icon">↻</span>
           <span id="refresh-label">重新加载</span>
@@ -145,6 +145,30 @@
   <footer class="footer">
     <p>数据来源：BBC、半岛电视台、以色列时报、卫报、耶路撒冷邮报、France 24、中东眼、Press TV、TASS RSS 订阅 · 每小时自动更新 · 翻译 DeepL · 分析 DeepSeek</p>
   </footer>
+
+  <!-- ── Donate Modal ── -->
+  <div class="donate-overlay" id="donate-overlay" onclick="closeDonateModal(event)">
+    <div class="donate-modal">
+      <button class="donate-close" onclick="closeDonateModal()">✕</button>
+      <h3>🍗 给作者加鸡腿</h3>
+      <p class="donate-sub">感谢支持！选择你的方式：</p>
+      <div class="donate-options">
+        <div class="donate-option" onclick="showWechat()">
+          <span class="donate-icon">💚</span>
+          <span class="donate-label">微信收款码</span>
+        </div>
+        <a class="donate-option" href="https://ko-fi.com/deweizhai" target="_blank" rel="noopener" onclick="closeDonateModal()">
+          <span class="donate-icon">☕</span>
+          <span class="donate-label">Ko-fi</span>
+        </a>
+      </div>
+      <div class="donate-wechat" id="donate-wechat" style="display:none">
+        <img src="wechat-pay.png" alt="微信收款码" id="wechat-qr-img" />
+        <p class="donate-scan-tip">📱 手机用户：在<strong>微信内</strong>长按图片可识别二维码</p>
+        <a class="donate-save-link" href="wechat-pay.png" download="wechat-pay.png">💾 保存二维码到相册</a>
+      </div>
+    </div>
+  </div>
 
   <!-- ── Toast Container (fixed) ── -->
   <div class="toast-container" id="toast-container"></div>
