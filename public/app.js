@@ -37,24 +37,30 @@ function getDateLabel(dateStr) {
 }
 
 // ─── Breaking News Banner ─────────────────────────────────────────────────────
+const BREAKING_WINDOW_MS = 8 * 60 * 60 * 1000; // 8 小时内算"突发"
+
 function updateBreakingBanner(events) {
-  const breaking = events
+  const top5 = events
     .filter(e => (e.importance || 0) >= 5)
     .sort((a, b) => new Date(b.pubDate) - new Date(a.pubDate))[0];
 
   const banner = document.getElementById('breaking-banner');
-  if (!breaking) { banner.style.display = 'none'; return; }
-  // Don't re-show if user dismissed this exact event
-  if (breaking.id === breakingDismissedId) return;
+  if (!top5) { banner.style.display = 'none'; return; }
+  if (top5.id === breakingDismissedId) return;
 
-  const titleZh = (breaking.titleZh && breaking.titleZh !== breaking.titleEn)
-    ? breaking.titleZh : breaking.titleEn;
+  const isBreaking = (Date.now() - new Date(top5.pubDate).getTime()) < BREAKING_WINDOW_MS;
+
+  const titleZh = (top5.titleZh && top5.titleZh !== top5.titleEn)
+    ? top5.titleZh : top5.titleEn;
   document.getElementById('breaking-text').textContent = titleZh;
+  document.getElementById('breaking-label').textContent = isBreaking ? '⚡ 突发' : '📌 置顶';
 
   const link = document.getElementById('breaking-link');
-  if (breaking.link) { link.href = breaking.link; link.style.display = ''; }
-  else               { link.style.display = 'none'; }
+  if (top5.link) { link.href = top5.link; link.style.display = ''; }
+  else           { link.style.display = 'none'; }
 
+  banner.classList.toggle('breaking-mode', isBreaking);
+  banner.classList.toggle('pinned-mode',   !isBreaking);
   banner.style.display = 'flex';
 }
 

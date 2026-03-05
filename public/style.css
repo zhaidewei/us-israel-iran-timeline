@@ -172,55 +172,82 @@ body {
   color: var(--text-muted);
 }
 
-/* ===== Breaking News Banner ===== */
+/* ===== Breaking / Pinned Banner ===== */
 .breaking-banner {
-  background: linear-gradient(90deg, #7f1d1d, #991b1b);
-  border-bottom: 1px solid #dc2626;
   padding: 10px 24px;
   display: flex;
   align-items: center;
   gap: 12px;
   flex-wrap: wrap;
-  animation: breakingPulse 2s ease-in-out infinite;
 }
 
+/* 8小时内：红幅突发 */
+.breaking-banner.breaking-mode {
+  background: linear-gradient(90deg, #7f1d1d, #991b1b);
+  border-bottom: 1px solid #dc2626;
+  animation: breakingPulse 2s ease-in-out infinite;
+}
 @keyframes breakingPulse {
   0%, 100% { background: linear-gradient(90deg, #7f1d1d, #991b1b); }
   50%       { background: linear-gradient(90deg, #991b1b, #b91c1c); }
 }
 
+/* 超过8小时：静默置顶 */
+.breaking-banner.pinned-mode {
+  background: var(--surface2);
+  border-bottom: 1px solid var(--border);
+  animation: none;
+}
+
+/* 标签 */
+.breaking-banner.breaking-mode .breaking-label { color: #fca5a5; }
+.breaking-banner.pinned-mode   .breaking-label { color: var(--text-muted); }
+
 .breaking-label {
   font-weight: 800;
   font-size: 0.8rem;
   letter-spacing: 0.08em;
-  color: #fca5a5;
   white-space: nowrap;
 }
+
+/* 正文 */
+.breaking-banner.breaking-mode .breaking-text { color: #fee2e2; }
+.breaking-banner.pinned-mode   .breaking-text { color: var(--text); }
 
 .breaking-text {
   flex: 1;
   font-size: 0.92rem;
   font-weight: 600;
-  color: #fee2e2;
   line-height: 1.4;
 }
 
+/* 链接 */
+.breaking-banner.breaking-mode .breaking-link {
+  color: #fca5a5;
+  border-color: rgba(252,165,165,0.4);
+}
+.breaking-banner.pinned-mode .breaking-link {
+  color: var(--text-muted);
+  border-color: var(--border);
+}
 .breaking-link {
   font-size: 0.78rem;
-  color: #fca5a5;
   text-decoration: none;
   white-space: nowrap;
-  border: 1px solid rgba(252,165,165,0.4);
+  border: 1px solid;
   border-radius: 4px;
   padding: 2px 8px;
   transition: background var(--transition);
 }
-.breaking-link:hover { background: rgba(252,165,165,0.15); }
+.breaking-banner.breaking-mode .breaking-link:hover { background: rgba(252,165,165,0.15); }
+.breaking-banner.pinned-mode   .breaking-link:hover { background: var(--surface); }
 
+/* 关闭按钮 */
+.breaking-banner.breaking-mode .breaking-close { color: #fca5a5; }
+.breaking-banner.pinned-mode   .breaking-close { color: var(--text-muted); }
 .breaking-close {
   background: none;
   border: none;
-  color: #fca5a5;
   font-size: 1rem;
   cursor: pointer;
   padding: 2px 6px;
@@ -228,7 +255,8 @@ body {
   transition: background var(--transition);
   line-height: 1;
 }
-.breaking-close:hover { background: rgba(252,165,165,0.2); }
+.breaking-banner.breaking-mode .breaking-close:hover { background: rgba(252,165,165,0.2); }
+.breaking-banner.pinned-mode   .breaking-close:hover { background: var(--surface); }
 
 /* ===== Meta Bar (Legend + Filters) ===== */
 .meta-bar {
