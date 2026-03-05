@@ -265,6 +265,7 @@ async function generateSituationReport() {
 // ─── Main ─────────────────────────────────────────────────────────────────────
 
 async function main() {
+  const startTime = Date.now();
   console.log('=== 开始数据更新 ===', new Date().toISOString());
 
   if (!process.env.KV_REST_API_URL || !process.env.KV_REST_API_TOKEN) {
@@ -280,10 +281,13 @@ async function main() {
   await fetchPolymarketData(kv, DEEPL_TOKEN);
   await fetchMarketPrices(kv);
 
-  console.log('\n=== 数据更新完成 ===', new Date().toISOString());
+  const elapsed = ((Date.now() - startTime) / 1000).toFixed(1);
+  console.log(`\n=== 数据更新完成 === ${new Date().toISOString()} （耗时 ${elapsed}s）`);
 }
 
-main().catch(err => {
-  console.error('❌ 更新失败:', err);
-  process.exit(1);
-});
+main()
+  .then(() => process.exit(0))
+  .catch(err => {
+    console.error('❌ 更新失败:', err);
+    process.exit(1);
+  });

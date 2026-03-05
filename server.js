@@ -342,7 +342,7 @@ async function fetchPolymarketData() {
       return isWarRelatedMarket(m);
     })
     .sort((a, b) => (parseFloat(b.volume) || 0) - (parseFloat(a.volume) || 0))
-    .slice(0, 8);
+    .slice(0, 10);
 
   console.log(`[Polymarket] 共抓取 ${allMarkets.length} 个市场 → 关键词过滤后 ${relevant.length} 个`);
 

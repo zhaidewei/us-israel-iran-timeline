@@ -222,6 +222,7 @@ function renderTimeline(filteredEvents) {
         ? '🔍 没有符合筛选条件的事件。'
         : '📡 暂无事件。点击「刷新新闻」获取最新报道。';
     timeline.innerHTML = '';
+    renderDayNav([]);
     return;
   }
 
@@ -230,18 +231,76 @@ function renderTimeline(filteredEvents) {
 
   const clusters = groupByClusters(filteredEvents);
   let lastDateLabel = '';
+  const days = [];
+  let dayIndex = 0;
 
   clusters.forEach(cluster => {
     const label = getDateLabel(cluster[0].pubDate);
     if (label !== lastDateLabel) {
       lastDateLabel = label;
+      const id = `day-divider-${dayIndex++}`;
+      days.push({ label, id });
       const divider = document.createElement('div');
       divider.className = 'date-divider';
+      divider.id = id;
       divider.textContent = label;
       timeline.appendChild(divider);
     }
     timeline.appendChild(buildClusterBlock(cluster));
   });
+
+  renderDayNav(days);
+}
+
+// ─── Day Navigation ───────────────────────────────────────────────────────────
+function renderDayNav(days) {
+  const nav = document.getElementById('day-nav');
+  nav.innerHTML = '';
+
+  if (nav._scrollHandler) {
+    window.removeEventListener('scroll', nav._scrollHandler);
+    nav._scrollHandler = null;
+  }
+
+  if (days.length < 2) { nav.style.display = 'none'; return; }
+  nav.style.display = 'flex';
+  nav.style.top = document.querySelector('.header').offsetHeight + 'px';
+
+  days.forEach(({ label, id }, i) => {
+    const btn = document.createElement('button');
+    btn.className = 'day-nav-btn' + (i === 0 ? ' active' : '');
+    btn.textContent = label;
+    btn.dataset.targetId = id;
+    btn.addEventListener('click', () => {
+      const target = document.getElementById(id);
+      if (!target) return;
+      const top = target.getBoundingClientRect().top + window.scrollY
+                  - document.querySelector('.header').offsetHeight
+                  - nav.offsetHeight - 8;
+      window.scrollTo({ top, behavior: 'smooth' });
+    });
+    nav.appendChild(btn);
+  });
+
+  const buttons = Array.from(nav.querySelectorAll('.day-nav-btn'));
+
+  const updateActive = () => {
+    const threshold = document.querySelector('.header').offsetHeight + nav.offsetHeight + 20;
+    let activeId = buttons[0]?.dataset.targetId;
+    for (const btn of buttons) {
+      const el = document.getElementById(btn.dataset.targetId);
+      if (el && el.getBoundingClientRect().top <= threshold) activeId = btn.dataset.targetId;
+    }
+    buttons.forEach(b => {
+      const isActive = b.dataset.targetId === activeId;
+      b.classList.toggle('active', isActive);
+      if (isActive) b.scrollIntoView({ inline: 'nearest', block: 'nearest' });
+    });
+  };
+
+  nav._scrollHandler = updateActive;
+  window.addEventListener('scroll', updateActive, { passive: true });
+  updateActive();
 }
 
 function renderAll(events) {

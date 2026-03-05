@@ -5,3 +5,5 @@ prices.json
 analysis.json
 .env
 .env.local
+.env.vercel
+.vercel
