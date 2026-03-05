@@ -7,3 +7,4 @@ analysis.json
 .env.local
 .env.vercel
 .vercel
+events.backup.*.json
