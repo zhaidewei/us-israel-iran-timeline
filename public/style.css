@@ -20,6 +20,7 @@
   --presstv-color: #34d399;
   --irna-color:    #fb923c;
   --tass-color:    #f472b6;
+  --xinhua-color:  #e63946;
 
   --radius: 10px;
   --transition: 0.2s ease;
@@ -389,6 +390,7 @@ body {
 .legend-item.presstv  { color: var(--presstv-color); }
 .legend-item.irna     { color: var(--irna-color); }
 .legend-item.tass     { color: var(--tass-color); }
+.legend-item.xinhua   { color: var(--xinhua-color); }
 
 .legend-all-btn {
   background: none;
@@ -605,6 +607,7 @@ body {
 .event-card.presstv  { border-left: 3px solid var(--presstv-color); }
 .event-card.irna     { border-left: 3px solid var(--irna-color); }
 .event-card.tass     { border-left: 3px solid var(--tass-color); }
+.event-card.xinhua   { border-left: 3px solid var(--xinhua-color); }
 
 .event-card.bbc::before      { background: var(--bbc-color); }
 .event-card.aljazeera::before{ background: var(--aljazeera-color); }
@@ -616,6 +619,7 @@ body {
 .event-card.presstv::before  { background: var(--presstv-color); }
 .event-card.irna::before     { background: var(--irna-color); }
 .event-card.tass::before     { background: var(--tass-color); }
+.event-card.xinhua::before   { background: var(--xinhua-color); }
 
 /* Card meta row */
 .card-meta {
@@ -644,6 +648,7 @@ body {
 .presstv .source-tag  { background: rgba(52,211,153,0.18);  color: var(--presstv-color); }
 .irna .source-tag     { background: rgba(251,146,60,0.18);  color: var(--irna-color); }
 .tass .source-tag     { background: rgba(244,114,182,0.18); color: var(--tass-color); }
+.xinhua .source-tag   { background: rgba(230,57,70,0.18);   color: var(--xinhua-color); }
 
 /* ===== Category Tags ===== */
 .category-tag {
