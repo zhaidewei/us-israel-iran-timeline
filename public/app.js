@@ -22,7 +22,6 @@ function formatDate(dateStr) {
     return d.toLocaleString('zh-CN', {
       year: 'numeric', month: '2-digit', day: '2-digit',
       hour: '2-digit', minute: '2-digit',
-      timeZone: 'Asia/Shanghai'
     });
   } catch { return dateStr; }
 }
@@ -338,7 +337,7 @@ function updateTimestamp(isoStr) {
   const el = document.getElementById('last-updated');
   if (!el) return;
   try {
-    el.textContent = `最后更新：${new Date(isoStr).toLocaleString('zh-CN', { timeZone: 'Asia/Shanghai' })}`;
+    el.textContent = `最后更新：${new Date(isoStr).toLocaleString('zh-CN')}`;
   } catch { el.textContent = `最后更新：${isoStr}`; }
 }
 
@@ -427,7 +426,7 @@ function renderAnalysis(data) {
     try {
       const d = new Date(data.lastUpdated);
       document.getElementById('analysis-updated').textContent =
-        d.toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit', timeZone: 'Asia/Shanghai' });
+        d.toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' });
     } catch { /* ignore */ }
   }
 }
@@ -546,7 +545,7 @@ function renderPolymarket(data) {
     try {
       const d = new Date(data.lastUpdated);
       document.getElementById('poly-updated').textContent =
-        d.toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit', timeZone: 'Asia/Shanghai' });
+        d.toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' });
     } catch { /* ignore */ }
   }
 }
@@ -670,7 +669,7 @@ function renderPrices(data) {
     try {
       const d = new Date(data.lastUpdated);
       document.getElementById('prices-updated').textContent =
-        d.toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit', timeZone: 'Asia/Shanghai' });
+        d.toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' });
     } catch { /* ignore */ }
   }
 }
