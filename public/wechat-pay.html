@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>微信收款码</title>
+  <style>
+    :root {
+      color-scheme: light;
+    }
+    html, body {
+      margin: 0;
+      padding: 0;
+      height: 100%;
+      background: #111;
+      font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Noto Sans SC", sans-serif;
+    }
+    .wrap {
+      min-height: 100%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 14px;
+      padding: 20px 16px;
+      box-sizing: border-box;
+    }
+    img {
+      width: min(96vw, 720px);
+      max-height: 78vh;
+      object-fit: contain;
+      border-radius: 12px;
+      background: #fff;
+    }
+    p {
+      margin: 0;
+      color: #e5e7eb;
+      font-size: 15px;
+      text-align: center;
+      line-height: 1.4;
+    }
+    a {
+      color: #93c5fd;
+      font-size: 14px;
+    }
+  </style>
+</head>
+<body>
+  <main class="wrap">
+    <img src="wechat-pay.jpg" alt="微信收款码" />
+    <p>请在微信内长按二维码识别</p>
+    <a href="./">返回主页</a>
+  </main>
+</body>
+</html>

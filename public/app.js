@@ -885,6 +885,9 @@ function closeDonateModal(e) {
 function showWechat() {
   document.getElementById('donate-wechat').style.display = 'block';
 }
+function openWechatSinglePage() {
+  window.location.href = 'wechat-pay.html';
+}
 function openWechatPreview() {
   const overlay = document.getElementById('qr-preview-overlay');
   if (!overlay) return;
