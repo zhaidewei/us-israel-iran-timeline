@@ -94,6 +94,12 @@ function formatDate(dateStr) {
   } catch { return dateStr; }
 }
 
+function displaySourceName(source) {
+  if (source === 'Press TV') return 'Press TV（伊朗英语新闻台）';
+  if (source === 'TASS') return '塔斯社';
+  return source;
+}
+
 function getDateLabel(dateStr) {
   const d   = new Date(dateStr);
   const now  = new Date();
@@ -150,7 +156,7 @@ const CATEGORY_ORDER = ['军事打击', '防空拦截', '人员伤亡', '外交�
 const SOURCE_KEY_MAP = {
   'BBC中东': 'bbc', '半岛电视台': 'aljazeera', '以色列时报': 'toi',
   '卫报': 'guardian', '耶路撒冷邮报': 'jpost', 'France 24': 'france24',
-  '中东眼': 'mee', 'Press TV': 'presstv', 'TASS': 'tass',
+  '中东眼': 'mee', 'Press TV': 'presstv', 'CNN': 'cnn', 'TASS': 'tass',
   '新华社': 'xinhua',
 };
 
@@ -179,7 +185,7 @@ function buildSourceLegend(events) {
     const btn = document.createElement('button');
     btn.className = `legend-item ${key}`;
     btn.dataset.source = src;
-    btn.innerHTML = `● ${src}`;
+    btn.innerHTML = `● ${escapeHtml(displaySourceName(src))}`;
     btn.onclick = () => {
       if (activeSources.has(src)) activeSources.delete(src);
       else activeSources.add(src);
@@ -256,8 +262,7 @@ function getFilteredEvents() {
 }
 
 // ─── Cluster Grouping ─────────────────────────────────────────────────────────
-const RECENT_WINDOW_MS = 48 * 60 * 60 * 1000;
-const CLUSTER_BUCKET_MS = 12 * 60 * 60 * 1000;
+const RECENT_WINDOW_MS = 24 * 60 * 60 * 1000;
 
 function toDayKey(dateStr) {
   const d = new Date(dateStr);
@@ -277,12 +282,99 @@ function formatDayLabel(dayKey) {
   }
 }
 
-function groupByClusters(events) {
+function normalizeClusterKey(eventCluster = '') {
+  if (!eventCluster || String(eventCluster).startsWith('solo-')) return '';
+  let key = String(eventCluster).toLowerCase().trim();
+  // Remove common date-like suffixes so same event across sources can merge.
+  key = key
+    .replace(/-(20\d{2})(0[1-9]|1[0-2])([0-2]\d|3[01])$/, '') // -yyyymmdd
+    .replace(/-(0[1-9]|1[0-2])([0-2]\d|3[01])$/, '')           // -mmdd
+    .replace(/-(20\d{2})-(0[1-9]|1[0-2])-(0[1-9]|[12]\d|3[01])$/, ''); // -yyyy-mm-dd
+  return key;
+}
+
+function tokenizeForSimilarity(text = '') {
+  const s = String(text).toLowerCase();
+  const latin = s.replace(/[^a-z0-9\u4e00-\u9fff]+/g, ' ').trim();
+  const tokens = latin.split(/\s+/).filter(t => t.length >= 2);
+  const cjkOnly = s.replace(/[^\u4e00-\u9fff]/g, '');
+  for (let i = 0; i < cjkOnly.length - 1; i++) {
+    tokens.push(cjkOnly.slice(i, i + 2));
+  }
+  return new Set(tokens);
+}
+
+function jaccardSimilarity(setA, setB) {
+  if (!setA.size || !setB.size) return 0;
+  let inter = 0;
+  for (const t of setA) if (setB.has(t)) inter++;
+  const union = setA.size + setB.size - inter;
+  return union ? inter / union : 0;
+}
+
+function clusterRep(cluster) {
+  const top = cluster[0];
+  const title = (top.titleZh && top.titleZh !== top.titleEn) ? top.titleZh : top.titleEn || '';
+  const summary = top.briefZh || top.summaryZh || top.summaryEn || '';
+  const clusterKey = normalizeClusterKey(top.eventCluster || '');
+  const clusterTokens = new Set(clusterKey.split('-').filter(t => t && t.length >= 3));
+  return {
+    top,
+    dayKey: toDayKey(top.pubDate),
+    category: top.category || '',
+    tokens: tokenizeForSimilarity(`${title} ${summary}`),
+    clusterTokens,
+  };
+}
+
+function mergeNearClusters(clusters, aggressive = false) {
+  if (!aggressive || clusters.length < 2) return clusters;
+
+  const used = new Array(clusters.length).fill(false);
+  const reps = clusters.map(clusterRep);
+  const merged = [];
+
+  for (let i = 0; i < clusters.length; i++) {
+    if (used[i]) continue;
+    used[i] = true;
+    const bucket = [...clusters[i]];
+    const base = reps[i];
+
+    for (let j = i + 1; j < clusters.length; j++) {
+      if (used[j]) continue;
+      const cand = reps[j];
+      if (base.dayKey !== cand.dayKey) continue;
+
+      const textSim = jaccardSimilarity(base.tokens, cand.tokens);
+      const clusterSim = jaccardSimilarity(base.clusterTokens, cand.clusterTokens);
+      const sameCategory = base.category && cand.category && base.category === cand.category;
+      const shouldMerge =
+        clusterSim >= 0.45 ||
+        (sameCategory && textSim >= 0.34) ||
+        textSim >= 0.56;
+      if (!shouldMerge) continue;
+
+      used[j] = true;
+      bucket.push(...clusters[j]);
+    }
+
+    bucket.sort((a, b) =>
+      (b.importance || 3) - (a.importance || 3) ||
+      new Date(b.pubDate) - new Date(a.pubDate)
+    );
+    merged.push(bucket);
+  }
+
+  merged.sort((a, b) => new Date(b[0].pubDate) - new Date(a[0].pubDate));
+  return merged;
+}
+
+function groupByClusters(events, { aggressive = false } = {}) {
   const map = new Map();
   for (const e of events) {
-    const t = new Date(e.pubDate).getTime();
-    const bucket = isNaN(t) ? 0 : Math.floor(t / CLUSTER_BUCKET_MS);
-    const key = e.eventCluster ? `${e.eventCluster}::${bucket}` : `solo-${e.id}`;
+    const dayKey = toDayKey(e.pubDate);
+    const canonical = normalizeClusterKey(e.eventCluster);
+    const key = canonical ? `${canonical}::${dayKey}` : `solo-${e.id}`;
     if (!map.has(key)) map.set(key, []);
     map.get(key).push(e);
   }
@@ -294,7 +386,7 @@ function groupByClusters(events) {
     return articles;
   });
   clusters.sort((a, b) => new Date(b[0].pubDate) - new Date(a[0].pubDate));
-  return clusters;
+  return mergeNearClusters(clusters, aggressive);
 }
 
 function buildArchivedDayGroups(events) {
@@ -342,7 +434,7 @@ function buildCard(event, isSecondary) {
   card.className = `event-card ${event.sourceKey || ''}${isSecondary ? ' secondary-card' : ''}`;
   card.innerHTML = `
     <div class="card-meta">
-      <span class="source-tag">${escapeHtml(event.source)}</span>
+      <span class="source-tag">${escapeHtml(displaySourceName(event.source))}</span>
       ${cat ? `<span class="category-tag" data-cat="${escapeHtml(cat)}">${escapeHtml(cat)}</span>` : ''}
       ${importanceMark(event.importance || 3)}
       <span class="card-date">🕐 ${formatDate(event.pubDate)}</span>
@@ -384,10 +476,11 @@ function buildClusterBlock(articles) {
 
 // ─── Timeline Rendering (paginated) ──────────────────────────────────────────
 const PAGE_SIZE = 20;
+const ARCHIVE_DAY_PAGE_SIZE = 4;
 let currentRecentClusters = [];
 let renderedRecentClusterCount = 0;
 let archivedDayGroups = [];
-let archivedRendered = false;
+let appendedArchivedDayKeys = new Set();
 let renderedDays = [];
 let dayCounter = 0;
 
@@ -405,7 +498,7 @@ function renderTimeline(filteredEvents) {
     currentRecentClusters = [];
     renderedRecentClusterCount = 0;
     archivedDayGroups = [];
-    archivedRendered = false;
+    appendedArchivedDayKeys = new Set();
     renderedDays = [];
     dayCounter = 0;
     renderDayNav([]);
@@ -418,15 +511,15 @@ function renderTimeline(filteredEvents) {
   const recentEvents = filteredEvents.filter(e => new Date(e.pubDate).getTime() >= cutoffTs);
   const olderEvents = filteredEvents.filter(e => new Date(e.pubDate).getTime() < cutoffTs);
 
-  currentRecentClusters = groupByClusters(recentEvents);
+  currentRecentClusters = groupByClusters(recentEvents, { aggressive: true });
   renderedRecentClusterCount = 0;
   archivedDayGroups = buildArchivedDayGroups(olderEvents);
-  archivedRendered = false;
+  appendedArchivedDayKeys = new Set();
   renderedDays = [];
   dayCounter = 0;
 
   if (!recentEvents.length && archivedDayGroups.length) {
-    appendArchivedSummaries();
+    appendArchivedSummariesBatch();
     return;
   }
 
@@ -434,106 +527,147 @@ function renderTimeline(filteredEvents) {
 }
 
 function appendMoreClusters() {
-  const timeline = document.getElementById('timeline');
-
-  // Remove existing load-more button
-  document.getElementById('load-more-btn')?.remove();
-
   const batch = currentRecentClusters.slice(renderedRecentClusterCount, renderedRecentClusterCount + PAGE_SIZE);
-  let lastDateLabel = renderedDays.length ? renderedDays[renderedDays.length - 1].label : '';
+  let lastDayKey = renderedDays.length ? renderedDays[renderedDays.length - 1].dayKey : '';
+  const timeline = document.getElementById('timeline');
+  const appendRecentNode = (node) => {
+    const archivedWrap = document.getElementById('archived-days-wrap');
+    if (archivedWrap) timeline.insertBefore(node, archivedWrap);
+    else timeline.appendChild(node);
+  };
 
   batch.forEach(cluster => {
+    const dayKey = toDayKey(cluster[0].pubDate);
     const label = getDateLabel(cluster[0].pubDate);
-    if (label !== lastDateLabel) {
-      lastDateLabel = label;
+    if (dayKey !== lastDayKey) {
+      lastDayKey = dayKey;
       const id = `day-divider-${dayCounter++}`;
-      renderedDays.push({ label, id });
+      renderedDays.push({ label, id, dayKey });
       const divider = document.createElement('div');
       divider.className = 'date-divider';
       divider.id = id;
       divider.textContent = label;
-      timeline.appendChild(divider);
+      appendRecentNode(divider);
     }
-    timeline.appendChild(buildClusterBlock(cluster));
+    appendRecentNode(buildClusterBlock(cluster));
   });
 
   renderedRecentClusterCount += batch.length;
+  appendArchivedSummariesForRenderedDays();
   renderDayNav(renderedDays);
-
-  if (!archivedRendered) appendArchivedSummaries();
-
-  if (renderedRecentClusterCount < currentRecentClusters.length) {
-    const remaining = currentRecentClusters.length - renderedRecentClusterCount;
-    const btn = document.createElement('button');
-    btn.id = 'load-more-btn';
-    btn.className = 'load-more-btn';
-    btn.textContent = `加载更多（还有 ${remaining} 个事件簇）`;
-    btn.addEventListener('click', appendMoreClusters);
-    const archivedWrap = document.getElementById('archived-days-wrap');
-    if (archivedWrap) timeline.insertBefore(btn, archivedWrap);
-    else timeline.appendChild(btn);
-    return;
-  }
+  renderLoadMoreButton();
 }
 
-function appendArchivedSummaries() {
-  const timeline = document.getElementById('timeline');
-  archivedRendered = true;
-  if (!archivedDayGroups.length) return;
-  if (document.getElementById('archived-days-wrap')) return;
+function appendArchivedSummariesBatch() {
+  const pending = archivedDayGroups.filter(g => !appendedArchivedDayKeys.has(g.dayKey));
+  if (!pending.length) {
+    renderLoadMoreButton();
+    return;
+  }
+  const wrap = ensureArchivedWrap();
 
-  const wrap = document.createElement('div');
-  wrap.id = 'archived-days-wrap';
-  wrap.className = 'archived-days-wrap';
+  const batch = pending.slice(0, ARCHIVE_DAY_PAGE_SIZE);
+  let lastDayKey = renderedDays.length ? renderedDays[renderedDays.length - 1].dayKey : '';
 
-  let lastDateLabel = renderedDays.length ? renderedDays[renderedDays.length - 1].label : '';
-
-  archivedDayGroups.forEach(group => {
-    const label = group.label;
-    if (label !== lastDateLabel) {
-      lastDateLabel = label;
+  batch.forEach(group => {
+    if (group.dayKey !== lastDayKey) {
+      lastDayKey = group.dayKey;
       const id = `day-divider-${dayCounter++}`;
-      renderedDays.push({ label, id });
+      renderedDays.push({ label: group.label, id, dayKey: group.dayKey });
       const divider = document.createElement('div');
       divider.className = 'date-divider archive-divider';
       divider.id = id;
-      divider.textContent = `${label}（历史）`;
+      divider.textContent = `${group.label}（历史）`;
       wrap.appendChild(divider);
     }
-
-    const section = document.createElement('section');
-    section.className = 'archive-day-section';
-
-    const btn = document.createElement('button');
-    btn.className = 'archive-day-toggle';
-    const clusterCount = group.clusters.length;
-    const shortTop = group.topTitle && group.topTitle.length > 28
-      ? `${group.topTitle.slice(0, 28)}...`
-      : group.topTitle;
-    const topTitle = shortTop ? ` · 聚合最多：${shortTop}（${group.topClusterSize}条）` : '';
-    btn.textContent = `📦 ${group.events.length} 条报道，${clusterCount} 个事件簇${topTitle} ▾`;
-
-    const content = document.createElement('div');
-    content.className = 'archive-day-content hidden';
-
-    btn.addEventListener('click', () => {
-      const collapsed = content.classList.toggle('hidden');
-      if (!content.dataset.rendered) {
-        group.clusters.forEach(cluster => content.appendChild(buildClusterBlock(cluster)));
-        content.dataset.rendered = '1';
-      }
-      btn.textContent = collapsed
-        ? `📦 ${group.events.length} 条报道，${clusterCount} 个事件簇${topTitle} ▾`
-        : '收起当日新闻 ▴';
-    });
-
-    section.appendChild(btn);
-    section.appendChild(content);
-    wrap.appendChild(section);
+    wrap.appendChild(buildArchiveDaySection(group));
+    appendedArchivedDayKeys.add(group.dayKey);
   });
 
-  timeline.appendChild(wrap);
   renderDayNav(renderedDays);
+  renderLoadMoreButton();
+}
+
+function renderLoadMoreButton() {
+  const timeline = document.getElementById('timeline');
+  document.getElementById('load-more-btn')?.remove();
+
+  const remainingRecent = currentRecentClusters.length - renderedRecentClusterCount;
+  const remainingArchiveDays = archivedDayGroups.filter(g => !appendedArchivedDayKeys.has(g.dayKey)).length;
+  if (remainingRecent <= 0 && remainingArchiveDays <= 0) return;
+
+  const btn = document.createElement('button');
+  btn.id = 'load-more-btn';
+  btn.className = 'load-more-btn';
+
+  if (remainingRecent > 0) {
+    btn.textContent = `加载更多（还有 ${remainingRecent} 个事件簇）`;
+    btn.addEventListener('click', appendMoreClusters);
+  } else {
+    btn.textContent = `加载更多历史摘要（还有 ${remainingArchiveDays} 天）`;
+    btn.addEventListener('click', appendArchivedSummariesBatch);
+  }
+
+  const archivedWrap = document.getElementById('archived-days-wrap');
+  if (archivedWrap) timeline.insertBefore(btn, archivedWrap);
+  else timeline.appendChild(btn);
+}
+
+function ensureArchivedWrap() {
+  const timeline = document.getElementById('timeline');
+  let wrap = document.getElementById('archived-days-wrap');
+  if (wrap) return wrap;
+  wrap = document.createElement('div');
+  wrap.id = 'archived-days-wrap';
+  wrap.className = 'archived-days-wrap';
+  timeline.appendChild(wrap);
+  return wrap;
+}
+
+function buildArchiveDaySection(group) {
+  const section = document.createElement('section');
+  section.className = 'archive-day-section';
+
+  const btn = document.createElement('button');
+  btn.className = 'archive-day-toggle';
+  const clusterCount = group.clusters.length;
+  const shortTop = group.topTitle && group.topTitle.length > 28
+    ? `${group.topTitle.slice(0, 28)}...`
+    : group.topTitle;
+  const topTitle = shortTop ? ` · 聚合最多：${shortTop}（${group.topClusterSize}条）` : '';
+  btn.textContent = `📦 ${group.label} · ${group.events.length} 条报道，${clusterCount} 个事件簇${topTitle} ▾`;
+
+  const content = document.createElement('div');
+  content.className = 'archive-day-content hidden';
+
+  btn.addEventListener('click', () => {
+    const collapsed = content.classList.toggle('hidden');
+    if (!content.dataset.rendered) {
+      group.clusters.forEach(cluster => content.appendChild(buildClusterBlock(cluster)));
+      content.dataset.rendered = '1';
+    }
+    btn.textContent = collapsed
+      ? `📦 ${group.label} · ${group.events.length} 条报道，${clusterCount} 个事件簇${topTitle} ▾`
+      : `收起 ${group.label} 新闻 ▴`;
+  });
+
+  section.appendChild(btn);
+  section.appendChild(content);
+  return section;
+}
+
+function appendArchivedSummariesForRenderedDays() {
+  if (!archivedDayGroups.length) return;
+  const renderedDayKeys = new Set(renderedDays.map(d => d.dayKey));
+  const visiblePending = archivedDayGroups.filter(g =>
+    renderedDayKeys.has(g.dayKey) && !appendedArchivedDayKeys.has(g.dayKey)
+  );
+  if (!visiblePending.length) return;
+  const wrap = ensureArchivedWrap();
+  visiblePending.forEach(group => {
+    wrap.appendChild(buildArchiveDaySection(group));
+    appendedArchivedDayKeys.add(group.dayKey);
+  });
 }
 
 // ─── Day Navigation ───────────────────────────────────────────────────────────

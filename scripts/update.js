@@ -22,7 +22,7 @@ async function main() {
   if (!DEEPSEEK_TOKEN) console.warn('⚠ DEEPSEEK_API_TOKEN 未设置，跳过 LLM 分析');
 
   await fetchAndRefresh(kv, { deeplToken: DEEPL_TOKEN, deepseekToken: DEEPSEEK_TOKEN });
-  await generateSituationReport(kv, DEEPSEEK_TOKEN);
+  await generateSituationReport(kv, DEEPSEEK_TOKEN, { force: false, maxAgeMs: 6 * 60 * 60 * 1000 });
   await fetchPolymarketData(kv, DEEPL_TOKEN);
   await fetchMarketPrices(kv);
 

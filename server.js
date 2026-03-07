@@ -89,7 +89,7 @@ app.get('/api/analysis', async (req, res) => {
 
 app.get('/api/analysis/refresh', async (req, res) => {
   try {
-    res.json(await generateSituationReport(store, DEEPSEEK_TOKEN));
+    res.json(await generateSituationReport(store, DEEPSEEK_TOKEN, { force: true }));
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -138,6 +138,12 @@ app.listen(PORT, () => {
   setTimeout(() => fetchMarketPrices(store).catch(console.error), 8000);
   setInterval(() => fetchMarketPrices(store).catch(console.error), 15 * 60 * 1000);
 
-  setTimeout(() => generateSituationReport(store, DEEPSEEK_TOKEN).catch(console.error), 15000);
-  setInterval(() => generateSituationReport(store, DEEPSEEK_TOKEN).catch(console.error), 60 * 60 * 1000);
+  setTimeout(
+    () => generateSituationReport(store, DEEPSEEK_TOKEN, { force: false, maxAgeMs: 6 * 60 * 60 * 1000 }).catch(console.error),
+    15000
+  );
+  setInterval(
+    () => generateSituationReport(store, DEEPSEEK_TOKEN, { force: false, maxAgeMs: 6 * 60 * 60 * 1000 }).catch(console.error),
+    60 * 60 * 1000
+  );
 });
