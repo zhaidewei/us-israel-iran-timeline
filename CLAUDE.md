@@ -1,0 +1,95 @@
+# CLAUDE.md
+
+This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+
+## Commands
+
+```bash
+npm start           # run local dev server on port 3000
+npm test            # run all tests (Node built-in test runner, no install needed)
+node --test test/polymarket-refresh.test.js   # run a single test file
+```
+
+Tests run automatically as a pre-commit hook.
+
+## Environment Variables
+
+| Variable | Purpose |
+|---|---|
+| `DEEPL_TOKEN` | DeepL API key for translating news titles and Polymarket questions to Chinese |
+| `DEEPSEEK_API_TOKEN` | DeepSeek API key for LLM event clustering / situation report |
+| `REFRESH_API_KEY` / `CRON_SECRET` | Bearer token required by protected refresh endpoints |
+| `KV_REST_API_URL` / `KV_REST_API_TOKEN` | Upstash Redis (used in Vercel deployment only) |
+
+## Architecture
+
+This app has **two deployment targets** that share all `lib/` business logic:
+
+### 1. Local / standalone Express server (`server.js`)
+- Single-process Node server on port 3000
+- Uses `lib/localStore.js` as the KV store (reads/writes `events.json`, `polymarket.json`, `prices.json`, `analysis.json` at the repo root)
+- Schedules background refreshes with `setInterval` on startup
+- `server.js` exports `{ app, _resetPolymarketCooldown }` for tests and guards `app.listen` behind `require.main === module`
+
+### 2. Vercel serverless (`api/` directory)
+- Each file under `api/` is a Vercel serverless function handler
+- Uses `lib/kv.js` (Upstash Redis via REST) instead of `lib/localStore.js`
+- Both stores expose the same `{ get, set }` interface, so all `lib/` functions accept either
+
+### KV store abstraction
+All `lib/` data-fetching functions take a `kv` argument (`{ get, set }`). This is what allows the same business logic to work with local JSON files or Upstash Redis. Never let `lib/` code `require` a store directly.
+
+### Data flow per domain
+
+**News** (`lib/news.js`): RSS feeds → DeepL translation → DeepSeek LLM clustering into `eventCluster` → written to `kv.set('events', ...)`
+
+**Polymarket** (`lib/polymarket.js`): Polymarket Gamma API (5 keyword searches + 3 broad fetches) → keyword filter (`POLY_RELEVANT_KW`) → DeepL translation of new questions only → written to `kv.set('polymarket', ...)`
+
+**Prices** (`lib/prices.js`): Yahoo Finance v8 API (parallel, with fallback from query1→query2) → written to `kv.set('prices', ...)`
+
+**Analysis** (`lib/news.js` `generateSituationReport`): Reads events from KV → DeepSeek LLM → written to `kv.set('analysis', ...)`
+
+### Auth pattern
+Protected endpoints (news refresh, reanalyze, retranslate, analysis refresh) use `lib/refreshAuth.js`. It accepts the key via `X-Refresh-Key` header, `Authorization: Bearer <key>`, or `?key=` query param. If `REFRESH_API_KEY` is unset the endpoint returns 503.
+
+`GET /api/polymarket/refresh` is intentionally unprotected (frontend-triggerable) but has a 60-second server-side cooldown to prevent hammering the Polymarket API.
+
+### Testing approach
+Tests mock `lib/polymarket` by pre-populating `require.cache` before `require('../server')`. This pattern must be used for any lib that makes external HTTP calls.
+
+### All registration points for sources/assets
+When adding or removing a news source or data asset, every one of these locations must be updated:
+- `lib/news.js` — RSS feed URL list
+- `server.js` — any hardcoded asset/source arrays
+- `public/` HTML — legend labels, source filter buttons
+- `api/` handlers — if source-specific logic exists
+
+Missing any one of these causes silent failures (data not shown, legend out of sync).
+
+## Data Sources
+
+Before integrating any new RSS feed, verify it is live and has recent entries:
+
+```bash
+curl -s "<URL>" | head -80   # check for valid XML and recent dates
+```
+
+If the feed returns errors, is Cloudflare-blocked, or has no entries newer than 7 days — stop and report to the user before writing any integration code.
+
+## KV Storage
+
+Two KV implementations share the same `{ get, set }` interface:
+- **Local dev**: `lib/localStore.js` (reads/writes JSON files at repo root)
+- **Vercel**: `lib/kv.js` (Upstash Redis REST API)
+
+**Never double-serialize.** `kv.set` already calls `JSON.stringify`. Never pass an already-stringified string to it. Always check `lib/kv.js` and `lib/localStore.js` for the current serialization pattern before writing any KV code.
+
+## Debugging UI Issues
+
+For layout or display bugs, **check JavaScript before CSS**. Most layout issues in this codebase (sticky nav, scroll behavior, element visibility) have root causes in JS event handlers or dynamic DOM manipulation — not CSS. Start by searching for JS that references the affected element before attempting any CSS fix.
+
+## Cron / Scheduled Tasks
+
+All Node.js scripts invoked by cron or launchd **must**:
+1. Call `process.exit()` in every code path (including error handlers) — missing this causes zombie processes that silently block future runs
+2. Set a hard timeout (e.g. `setTimeout(() => process.exit(1), 5 * 60 * 1000)`) to prevent indefinite hangs
