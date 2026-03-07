@@ -29,6 +29,60 @@ function escapeHtml(str) {
     .replace(/'/g, '&#39;');
 }
 
+function normalizeLink(link) {
+  if (!link) return '';
+  try {
+    const u = new URL(String(link));
+    // Ignore tracking params to dedupe same article URL variants.
+    u.searchParams.delete('at_medium');
+    u.searchParams.delete('at_campaign');
+    u.searchParams.delete('utm_source');
+    u.searchParams.delete('utm_medium');
+    u.searchParams.delete('utm_campaign');
+    u.searchParams.sort();
+    return u.toString();
+  } catch {
+    return String(link).trim();
+  }
+}
+
+function eventQualityScore(e) {
+  let score = 0;
+  if (e.eventCluster) score += 4;
+  if (e.category) score += 3;
+  if (e.briefZh) score += 2;
+  if (e.summaryZh) score += 2;
+  if (e.importance != null) score += 1;
+  if (e.titleZh && e.titleZh !== e.titleEn) score += 1;
+  return score;
+}
+
+function dedupeEvents(events) {
+  const map = new Map();
+  for (const e of events) {
+    const linkKey = normalizeLink(e.link);
+    const fallback = `${e.source || ''}|${e.titleEn || ''}|${e.pubDate || ''}`;
+    const key = linkKey ? `${e.source || ''}|${linkKey}` : fallback;
+    const prev = map.get(key);
+    if (!prev) {
+      map.set(key, e);
+      continue;
+    }
+
+    const prevScore = eventQualityScore(prev);
+    const currScore = eventQualityScore(e);
+    if (currScore > prevScore) {
+      map.set(key, e);
+    } else if (currScore === prevScore) {
+      // Tie-breaker: keep newer fetched record if available.
+      const prevTs = Date.parse(prev.fetchedAt || prev.pubDate || 0);
+      const currTs = Date.parse(e.fetchedAt || e.pubDate || 0);
+      if (currTs > prevTs) map.set(key, e);
+    }
+  }
+  return Array.from(map.values());
+}
+
 function formatDate(dateStr) {
   try {
     const d = new Date(dateStr);
@@ -255,13 +309,17 @@ function buildArchivedDayGroups(events) {
     .map(([dayKey, dayEvents]) => {
       dayEvents.sort((a, b) => new Date(b.pubDate) - new Date(a.pubDate));
       const clusters = groupByClusters(dayEvents);
-      const top = clusters[0]?.[0];
+      const biggestCluster = clusters
+        .slice()
+        .sort((a, b) => (b.length - a.length) || (new Date(b[0].pubDate) - new Date(a[0].pubDate)))[0];
+      const top = biggestCluster?.[0];
       return {
         dayKey,
         label: formatDayLabel(dayKey),
         events: dayEvents,
         clusters,
         topTitle: top ? ((top.titleZh && top.titleZh !== top.titleEn) ? top.titleZh : top.titleEn) : '',
+        topClusterSize: biggestCluster ? biggestCluster.length : 0,
       };
     })
     .sort((a, b) => (a.dayKey < b.dayKey ? 1 : -1));
@@ -452,7 +510,7 @@ function appendArchivedSummaries() {
     const shortTop = group.topTitle && group.topTitle.length > 28
       ? `${group.topTitle.slice(0, 28)}...`
       : group.topTitle;
-    const topTitle = shortTop ? ` · 最新：${shortTop}` : '';
+    const topTitle = shortTop ? ` · 聚合最多：${shortTop}（${group.topClusterSize}条）` : '';
     btn.textContent = `📦 ${group.events.length} 条报道，${clusterCount} 个事件簇${topTitle} ▾`;
 
     const content = document.createElement('div');
@@ -941,10 +999,11 @@ async function loadEvents() {
     const res  = await fetch('/api/events');
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const data = await res.json();
-    allEvents    = data.events || [];
+    const incoming = Array.isArray(data) ? data : (data.events || []);
+    allEvents    = dedupeEvents(incoming);
     lastEventIds = new Set(allEvents.map(e => e.id));
     renderAll(allEvents);
-    updateCount(data.total);
+    updateCount(allEvents.length);
     if (data.lastUpdated) updateTimestamp(data.lastUpdated);
   } catch (err) {
     console.error('加载事件失败:', err);
@@ -963,7 +1022,8 @@ async function refreshEvents(isAuto = false) {
     const res  = await fetch('/api/events');
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const data = await res.json();
-    const incoming = data.events || [];
+    const incomingRaw = Array.isArray(data) ? data : (data.events || []);
+    const incoming = dedupeEvents(incomingRaw);
 
     // 检测是否有新事件（GitHub Actions 可能刚写入了新数据）
     const newCount = incoming.filter(e => !lastEventIds.has(e.id)).length;
@@ -971,7 +1031,7 @@ async function refreshEvents(isAuto = false) {
     allEvents    = incoming;
     lastEventIds = new Set(allEvents.map(e => e.id));
     renderAll(allEvents);
-    updateCount(data.total);
+    updateCount(allEvents.length);
     if (data.lastUpdated) updateTimestamp(data.lastUpdated);
 
     if (isAuto && newCount > 0) showToast(`已新增 ${newCount} 条事件 ↑`, 'success');
