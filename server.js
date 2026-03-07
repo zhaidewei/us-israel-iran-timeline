@@ -105,10 +105,19 @@ app.get('/api/polymarket', async (req, res) => {
   res.json((await store.get('polymarket')) || { lastUpdated: null, markets: [] });
 });
 
+let lastPolymarketRefresh = 0;
+const POLYMARKET_REFRESH_COOLDOWN_MS = 60_000;
+
 app.get('/api/polymarket/refresh', async (req, res) => {
+  const now = Date.now();
+  if (now - lastPolymarketRefresh < POLYMARKET_REFRESH_COOLDOWN_MS) {
+    const retryAfter = Math.ceil((POLYMARKET_REFRESH_COOLDOWN_MS - (now - lastPolymarketRefresh)) / 1000);
+    return res.status(429).json({ error: `请稍候 ${retryAfter} 秒后再刷新` });
+  }
+  lastPolymarketRefresh = now;
   try {
     // 前端可触发的非 token 刷新：禁用 DeepL
-    res.json(await fetchPolymarketData(store, ''));
+    res.json(await fetchPolymarketData(store, null));
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -129,28 +138,31 @@ app.get('/api/prices/refresh', async (req, res) => {
 
 // ─── Start ────────────────────────────────────────────────────────────────────
 
-app.listen(PORT, () => {
-  console.log(`\n美以伊战争时间线已启动`);
-  console.log(`访问: http://localhost:${PORT}`);
-  console.log(`DeepL:    ${DEEPL_TOKEN    ? '✓' : '✗ 未配置'}`);
-  console.log(`DeepSeek: ${DEEPSEEK_TOKEN ? '✓' : '✗ 未配置'}\n`);
+if (require.main === module) {
+  app.listen(PORT, () => {
+    console.log(`\n美以伊战争时间线已启动`);
+    console.log(`访问: http://localhost:${PORT}`);
+    console.log(`DeepL:    ${DEEPL_TOKEN    ? '✓' : '✗ 未配置'}`);
+    console.log(`DeepSeek: ${DEEPSEEK_TOKEN ? '✓' : '✗ 未配置'}\n`);
 
-  setTimeout(() => fetchAndRefresh(store, tokens).catch(console.error), 2000);
-  setInterval(() => fetchAndRefresh(store, tokens).catch(console.error), 10 * 60 * 1000);
+    setTimeout(() => fetchAndRefresh(store, tokens).catch(console.error), 2000);
+    setInterval(() => fetchAndRefresh(store, tokens).catch(console.error), 10 * 60 * 1000);
 
-  setTimeout(() => fetchPolymarketData(store, DEEPL_TOKEN).catch(console.error), 6000);
-  setInterval(() => fetchPolymarketData(store, DEEPL_TOKEN).catch(console.error), 5 * 60 * 1000);
+    setTimeout(() => fetchPolymarketData(store, DEEPL_TOKEN).catch(console.error), 6000);
+    setInterval(() => fetchPolymarketData(store, DEEPL_TOKEN).catch(console.error), 5 * 60 * 1000);
 
-  setTimeout(() => fetchMarketPrices(store).catch(console.error), 8000);
-  setInterval(() => fetchMarketPrices(store).catch(console.error), 15 * 60 * 1000);
+    setTimeout(() => fetchMarketPrices(store).catch(console.error), 8000);
+    setInterval(() => fetchMarketPrices(store).catch(console.error), 15 * 60 * 1000);
 
-  setTimeout(
-    () => generateSituationReport(store, DEEPSEEK_TOKEN, { force: false, maxAgeMs: 6 * 60 * 60 * 1000 }).catch(console.error),
-    15000
-  );
-  setInterval(
-    () => generateSituationReport(store, DEEPSEEK_TOKEN, { force: false, maxAgeMs: 6 * 60 * 60 * 1000 }).catch(console.error),
-    60 * 60 * 1000
-  );
+    setTimeout(
+      () => generateSituationReport(store, DEEPSEEK_TOKEN, { force: false, maxAgeMs: 6 * 60 * 60 * 1000 }).catch(console.error),
+      15000
+    );
+    setInterval(
+      () => generateSituationReport(store, DEEPSEEK_TOKEN, { force: false, maxAgeMs: 6 * 60 * 60 * 1000 }).catch(console.error),
+      60 * 60 * 1000
+    );
+  });
+}
 
-});
+module.exports = { app, _resetPolymarketCooldown: () => { lastPolymarketRefresh = 0; } };
