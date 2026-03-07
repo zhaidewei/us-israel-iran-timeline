@@ -106,9 +106,9 @@ app.get('/api/polymarket', async (req, res) => {
 });
 
 app.get('/api/polymarket/refresh', async (req, res) => {
-  if (!requireRefreshAuth(req, res)) return;
   try {
-    res.json(await fetchPolymarketData(store, DEEPL_TOKEN));
+    // 前端可触发的非 token 刷新：禁用 DeepL
+    res.json(await fetchPolymarketData(store, ''));
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
