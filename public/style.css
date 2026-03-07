@@ -751,6 +751,40 @@ body {
 .sub-sources.hidden { display: none; }
 .sub-sources .event-card { margin-bottom: 8px; border-radius: var(--radius); }
 
+/* ===== Archived Day Summaries (>48h) ===== */
+.archive-divider {
+  color: #9aa3c7;
+}
+.archive-day-section {
+  margin: 10px 0 18px;
+}
+.archive-day-toggle {
+  width: 100%;
+  text-align: left;
+  background: rgba(154,163,199,0.08);
+  border: 1px solid rgba(154,163,199,0.26);
+  color: #b8c0de;
+  border-radius: 10px;
+  padding: 10px 14px;
+  font-size: 0.84rem;
+  font-family: inherit;
+  cursor: pointer;
+  line-height: 1.5;
+}
+.archive-day-toggle:hover {
+  background: rgba(154,163,199,0.14);
+  border-color: rgba(154,163,199,0.36);
+}
+.archive-day-content {
+  margin-top: 10px;
+}
+.archive-day-content.hidden {
+  display: none;
+}
+.archived-days-wrap {
+  margin-top: 8px;
+}
+
 /* ===== Toast Notifications ===== */
 .toast-container {
   position: fixed;
