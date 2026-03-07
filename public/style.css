@@ -18,6 +18,8 @@
   --france24-color: #f472b6;
   --mee-color: #2dd4bf;
   --presstv-color: #34d399;
+  --nyt-color:     #9ca3af;
+  --npr-color:     #60a5fa;
   --irna-color:    #fb923c;
   --tass-color:    #f472b6;
   --xinhua-color:  #e63946;
@@ -388,6 +390,8 @@ body {
 .legend-item.france24 { color: var(--france24-color); }
 .legend-item.mee      { color: var(--mee-color); }
 .legend-item.presstv  { color: var(--presstv-color); }
+.legend-item.nyt      { color: var(--nyt-color); }
+.legend-item.npr      { color: var(--npr-color); }
 .legend-item.irna     { color: var(--irna-color); }
 .legend-item.tass     { color: var(--tass-color); }
 .legend-item.xinhua   { color: var(--xinhua-color); }
@@ -605,6 +609,8 @@ body {
 .event-card.france24 { border-left: 3px solid var(--france24-color); }
 .event-card.mee      { border-left: 3px solid var(--mee-color); }
 .event-card.presstv  { border-left: 3px solid var(--presstv-color); }
+.event-card.nyt      { border-left: 3px solid var(--nyt-color); }
+.event-card.npr      { border-left: 3px solid var(--npr-color); }
 .event-card.irna     { border-left: 3px solid var(--irna-color); }
 .event-card.tass     { border-left: 3px solid var(--tass-color); }
 .event-card.xinhua   { border-left: 3px solid var(--xinhua-color); }
@@ -617,6 +623,8 @@ body {
 .event-card.france24::before { background: var(--france24-color); }
 .event-card.mee::before      { background: var(--mee-color); }
 .event-card.presstv::before  { background: var(--presstv-color); }
+.event-card.nyt::before      { background: var(--nyt-color); }
+.event-card.npr::before      { background: var(--npr-color); }
 .event-card.irna::before     { background: var(--irna-color); }
 .event-card.tass::before     { background: var(--tass-color); }
 .event-card.xinhua::before   { background: var(--xinhua-color); }
@@ -646,6 +654,8 @@ body {
 .france24 .source-tag { background: rgba(244,114,182,0.18); color: var(--france24-color); }
 .mee .source-tag      { background: rgba(45,212,191,0.18);  color: var(--mee-color); }
 .presstv .source-tag  { background: rgba(52,211,153,0.18);  color: var(--presstv-color); }
+.nyt .source-tag      { background: rgba(156,163,175,0.18); color: var(--nyt-color); }
+.npr .source-tag      { background: rgba(96,165,250,0.18);  color: var(--npr-color); }
 .irna .source-tag     { background: rgba(251,146,60,0.18);  color: var(--irna-color); }
 .tass .source-tag     { background: rgba(244,114,182,0.18); color: var(--tass-color); }
 .xinhua .source-tag   { background: rgba(230,57,70,0.18);   color: var(--xinhua-color); }
