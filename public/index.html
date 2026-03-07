@@ -75,7 +75,7 @@
       </div>
       <div class="analysis-controls">
         <span class="analysis-updated-label">更新于 <span id="analysis-updated">—</span></span>
-        <button class="analysis-refresh-btn" id="analysis-refresh-btn" onclick="refreshAnalysis()" title="重新生成">↻</button>
+        <button class="analysis-refresh-btn" id="analysis-refresh-btn" onclick="refreshAnalysis()" title="刷新缓存">↻</button>
       </div>
     </div>
     <div id="analysis-body">
@@ -93,7 +93,7 @@
       </div>
       <div class="poly-controls">
         <span class="poly-updated-label">更新于 <span id="poly-updated">—</span></span>
-        <button class="poly-refresh-btn" id="poly-refresh-btn" onclick="refreshPolymarket()" title="刷新">↻</button>
+        <button class="poly-refresh-btn" id="poly-refresh-btn" onclick="refreshPolymarket()" title="刷新缓存">↻</button>
       </div>
     </div>
     <div class="poly-grid" id="poly-grid">
@@ -115,6 +115,23 @@
     </div>
     <div class="prices-grid" id="prices-grid">
       <div class="prices-placeholder">正在加载行情数据...</div>
+    </div>
+  </section>
+
+  <section class="market-analysis-section" id="market-analysis-section">
+    <div class="market-analysis-header">
+      <div class="market-analysis-title">
+        <span class="market-analysis-icon">🧭</span>
+        <h2>AI 市场解读（24h）</h2>
+        <span class="market-analysis-badge">DeepSeek Reasoner</span>
+      </div>
+      <div class="market-analysis-controls">
+        <span class="market-analysis-updated-label">更新于 <span id="market-analysis-updated">—</span></span>
+        <button class="market-analysis-refresh-btn" id="market-analysis-refresh-btn" onclick="refreshMarketAnalysis()" title="刷新缓存">↻</button>
+      </div>
+    </div>
+    <div id="market-analysis-body">
+      <div class="market-analysis-placeholder">正在加载市场解读...</div>
     </div>
   </section>
 

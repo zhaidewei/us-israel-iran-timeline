@@ -5,6 +5,7 @@ const { fetchMarketPrices } = require('../../lib/prices');
 module.exports = async function handler(req, res) {
   try {
     const data = await fetchMarketPrices(kv);
+    res.setHeader('Cache-Control', 'no-store');
     res.json(data);
   } catch (err) {
     console.error('[api/prices/refresh]', err.message);

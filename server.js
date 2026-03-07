@@ -6,6 +6,8 @@ const { fetchAndRefresh, generateSituationReport, analyzeWithDeepSeek } = requir
 const { translateBatch }    = require('./lib/translate');
 const { fetchPolymarketData } = require('./lib/polymarket');
 const { fetchMarketPrices }   = require('./lib/prices');
+const { generateMarketReport } = require('./lib/marketAnalysis');
+const { requireRefreshAuth } = require('./lib/refreshAuth');
 
 const app  = express();
 const PORT = 3000;
@@ -28,6 +30,7 @@ app.get('/api/events', async (req, res) => {
 });
 
 app.get('/api/refresh', async (req, res) => {
+  if (!requireRefreshAuth(req, res)) return;
   try {
     const events = await fetchAndRefresh(store, tokens);
     res.json({ events, total: events.length, lastUpdated: new Date().toISOString() });
@@ -38,6 +41,7 @@ app.get('/api/refresh', async (req, res) => {
 
 // Dev utilities
 app.get('/api/reanalyze', async (req, res) => {
+  if (!requireRefreshAuth(req, res)) return;
   if (!DEEPSEEK_TOKEN) return res.status(400).json({ error: 'DEEPSEEK_API_TOKEN 未设置' });
   try {
     const events = (await store.get('events')) || [];
@@ -55,6 +59,7 @@ app.get('/api/reanalyze', async (req, res) => {
 });
 
 app.get('/api/retranslate', async (req, res) => {
+  if (!requireRefreshAuth(req, res)) return;
   if (!DEEPL_TOKEN && !DEEPSEEK_TOKEN)
     return res.status(400).json({ error: 'DEEPL_TOKEN 和 DEEPSEEK_API_TOKEN 均未设置' });
   try {
@@ -88,6 +93,7 @@ app.get('/api/analysis', async (req, res) => {
 });
 
 app.get('/api/analysis/refresh', async (req, res) => {
+  if (!requireRefreshAuth(req, res)) return;
   try {
     res.json(await generateSituationReport(store, DEEPSEEK_TOKEN, { force: true }));
   } catch (err) {
@@ -101,6 +107,7 @@ app.get('/api/polymarket', async (req, res) => {
 });
 
 app.get('/api/polymarket/refresh', async (req, res) => {
+  if (!requireRefreshAuth(req, res)) return;
   try {
     res.json(await fetchPolymarketData(store, DEEPL_TOKEN));
   } catch (err) {
@@ -116,6 +123,20 @@ app.get('/api/prices', async (req, res) => {
 app.get('/api/prices/refresh', async (req, res) => {
   try {
     res.json(await fetchMarketPrices(store));
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Market Analysis
+app.get('/api/market-analysis', async (req, res) => {
+  res.json((await store.get('marketAnalysis')) || null);
+});
+
+app.get('/api/market-analysis/refresh', async (req, res) => {
+  if (!requireRefreshAuth(req, res)) return;
+  try {
+    res.json(await generateMarketReport(store, DEEPSEEK_TOKEN, { force: true }));
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -144,6 +165,15 @@ app.listen(PORT, () => {
   );
   setInterval(
     () => generateSituationReport(store, DEEPSEEK_TOKEN, { force: false, maxAgeMs: 6 * 60 * 60 * 1000 }).catch(console.error),
+    60 * 60 * 1000
+  );
+
+  setTimeout(
+    () => generateMarketReport(store, DEEPSEEK_TOKEN, { force: false, maxAgeMs: 6 * 60 * 60 * 1000 }).catch(console.error),
+    18000
+  );
+  setInterval(
+    () => generateMarketReport(store, DEEPSEEK_TOKEN, { force: false, maxAgeMs: 6 * 60 * 60 * 1000 }).catch(console.error),
     60 * 60 * 1000
   );
 });

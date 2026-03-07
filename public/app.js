@@ -870,7 +870,7 @@ async function refreshAnalysis() {
   btn.classList.add('spinning');
   document.getElementById('analysis-body').innerHTML = '<div class="analysis-placeholder">正在加载战局综述...</div>';
   try {
-    // 读取 KV 缓存（分析由 GitHub Actions 每小时自动生成）
+    // 只读取缓存（避免网页端触发 DeepSeek 计费）
     const res = await fetch('/api/analysis');
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     renderAnalysis(await res.json());
@@ -988,6 +988,7 @@ async function refreshPolymarket() {
   btn.disabled = true;
   btn.classList.add('spinning');
   try {
+    // 非 token 刷新（后端已禁用 DeepL）
     const res = await fetch('/api/polymarket/refresh');
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     renderPolymarket(await res.json());
@@ -1008,6 +1009,7 @@ function startPolyAutoRefresh() {
 // ─── Market Prices ────────────────────────────────────────────────────────────
 const priceCharts = new Map();
 let pricesRefreshing = false;
+let marketAnalysisRefreshing = false;
 
 function formatPrice(value, id) {
   if (value == null || isNaN(value)) return '—';
@@ -1129,6 +1131,110 @@ function startPricesAutoRefresh() {
   setInterval(loadPrices, 15 * 60 * 1000);
 }
 
+// ─── AI Market Analysis ───────────────────────────────────────────────────────
+function directionText(dir) {
+  if (dir === '上涨') return '↑ 上涨';
+  if (dir === '下跌') return '↓ 下跌';
+  return '→ 震荡';
+}
+
+function renderMarketAnalysis(data) {
+  const body = document.getElementById('market-analysis-body');
+  if (!data) {
+    body.innerHTML = '<div class="market-analysis-empty">📭 暂无市场解读，请点击刷新按钮生成</div>';
+    return;
+  }
+
+  const regime = data?.overall_sentiment?.regime || '分化';
+  const summary = data?.overall_sentiment?.summary || '';
+  const flowBias = data?.capital_flow_hint?.bias || '';
+  const flowEvidence = Array.isArray(data?.capital_flow_hint?.evidence) ? data.capital_flow_hint.evidence : [];
+  const watch = Array.isArray(data?.next_24h_watchlist) ? data.next_24h_watchlist : [];
+  const read = data?.asset_read || {};
+
+  const assetRows = [
+    ['BTC', read?.btc],
+    ['WTI原油', read?.wti],
+    ['黄金', read?.gold],
+    ['标普500', read?.sp500],
+  ].map(([name, row]) => `
+    <div class="market-analysis-asset">
+      <div class="market-analysis-asset-head">
+        <span class="market-analysis-asset-name">${escapeHtml(name)}</span>
+        <span class="market-analysis-asset-dir">${escapeHtml(directionText(row?.direction))}</span>
+      </div>
+      <p class="market-analysis-asset-text">${escapeHtml(row?.interpretation || '')}</p>
+    </div>
+  `).join('');
+
+  const flowHtml = flowEvidence.length
+    ? `<ul class="market-analysis-list">${flowEvidence.map(x => `<li>${escapeHtml(x)}</li>`).join('')}</ul>`
+    : '';
+  const watchHtml = watch.length
+    ? `<ul class="market-analysis-list">${watch.map(x => `<li>${escapeHtml(x)}</li>`).join('')}</ul>`
+    : '';
+
+  body.innerHTML = `
+    <div class="market-analysis-card">
+      <div class="market-analysis-meta">
+        <span>情绪：${escapeHtml(regime)}</span>
+        <span>置信度：${Number(data.confidence) || 3}/5</span>
+      </div>
+      ${summary ? `<p class="market-analysis-summary">${escapeHtml(summary)}</p>` : ''}
+      <div class="market-analysis-assets">${assetRows}</div>
+      ${data.cross_asset_signal ? `<div class="market-analysis-block-title">跨资产联动</div><p class="market-analysis-paragraph">${escapeHtml(data.cross_asset_signal)}</p>` : ''}
+      ${flowBias ? `<div class="market-analysis-block-title">资金动向：${escapeHtml(flowBias)}</div>${flowHtml}` : ''}
+      ${watchHtml ? `<div class="market-analysis-block-title">未来24小时关注点</div>${watchHtml}` : ''}
+    </div>
+  `;
+
+  if (data.lastUpdated) {
+    try {
+      const d = new Date(data.lastUpdated);
+      document.getElementById('market-analysis-updated').textContent =
+        d.toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' });
+    } catch { /* ignore */ }
+  }
+}
+
+async function loadMarketAnalysis() {
+  try {
+    const res = await fetch('/api/market-analysis');
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    renderMarketAnalysis(await res.json());
+  } catch (err) {
+    console.error('[市场解读] 加载失败:', err);
+    document.getElementById('market-analysis-body').innerHTML = '<div class="market-analysis-empty">⚠️ 加载失败</div>';
+  }
+}
+
+async function refreshMarketAnalysis() {
+  if (marketAnalysisRefreshing) return;
+  marketAnalysisRefreshing = true;
+  const btn = document.getElementById('market-analysis-refresh-btn');
+  btn.disabled = true;
+  btn.classList.add('spinning');
+  document.getElementById('market-analysis-body').innerHTML = '<div class="market-analysis-placeholder">正在加载市场解读...</div>';
+  try {
+    // 只读取缓存（避免网页端触发 DeepSeek 计费）
+    const res = await fetch('/api/market-analysis');
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    renderMarketAnalysis(await res.json());
+  } catch (err) {
+    console.error('[市场解读] 刷新失败:', err);
+    showToast('市场解读刷新失败', 'error');
+    document.getElementById('market-analysis-body').innerHTML = '<div class="market-analysis-empty">⚠️ 刷新失败，请重试</div>';
+  } finally {
+    marketAnalysisRefreshing = false;
+    btn.disabled = false;
+    btn.classList.remove('spinning');
+  }
+}
+
+function startMarketAnalysisAutoRefresh() {
+  setInterval(loadMarketAnalysis, 15 * 60 * 1000);
+}
+
 // ─── API Calls ────────────────────────────────────────────────────────────────
 async function loadEvents() {
   try {
@@ -1194,6 +1300,8 @@ document.addEventListener('DOMContentLoaded', () => {
   startPolyAutoRefresh();
   loadPrices();
   startPricesAutoRefresh();
+  loadMarketAnalysis();
+  startMarketAnalysisAutoRefresh();
 });
 
 // ── Donate Choice Modal ──
