@@ -14,7 +14,6 @@ const localStore = require('../lib/localStore');
 const kv = require('../lib/kv');
 const { fetchAndRefresh, generateSituationReport } = require('../lib/news');
 const { fetchPolymarketData } = require('../lib/polymarket');
-const { generateMarketReport } = require('../lib/marketAnalysis');
 
 function parseTarget(argv) {
   const arg = argv.find(a => a.startsWith('--target='));
@@ -52,7 +51,6 @@ async function main() {
 
   await fetchAndRefresh(store, { deeplToken: DEEPL_TOKEN, deepseekToken: DEEPSEEK_TOKEN });
   await generateSituationReport(store, DEEPSEEK_TOKEN, { force: false, maxAgeMs: 6 * 60 * 60 * 1000 });
-  await generateMarketReport(store, DEEPSEEK_TOKEN, { force: false, maxAgeMs: 6 * 60 * 60 * 1000 });
   await fetchPolymarketData(store, DEEPL_TOKEN);
 
   const sec = ((Date.now() - start) / 1000).toFixed(1);

@@ -6,7 +6,6 @@ const { fetchAndRefresh, generateSituationReport, analyzeWithDeepSeek } = requir
 const { translateBatch }    = require('./lib/translate');
 const { fetchPolymarketData } = require('./lib/polymarket');
 const { fetchMarketPrices }   = require('./lib/prices');
-const { generateMarketReport } = require('./lib/marketAnalysis');
 const { requireRefreshAuth } = require('./lib/refreshAuth');
 
 const app  = express();
@@ -128,20 +127,6 @@ app.get('/api/prices/refresh', async (req, res) => {
   }
 });
 
-// Market Analysis
-app.get('/api/market-analysis', async (req, res) => {
-  res.json((await store.get('marketAnalysis')) || null);
-});
-
-app.get('/api/market-analysis/refresh', async (req, res) => {
-  if (!requireRefreshAuth(req, res)) return;
-  try {
-    res.json(await generateMarketReport(store, DEEPSEEK_TOKEN, { force: true }));
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
-});
-
 // ─── Start ────────────────────────────────────────────────────────────────────
 
 app.listen(PORT, () => {
@@ -168,12 +153,4 @@ app.listen(PORT, () => {
     60 * 60 * 1000
   );
 
-  setTimeout(
-    () => generateMarketReport(store, DEEPSEEK_TOKEN, { force: false, maxAgeMs: 6 * 60 * 60 * 1000 }).catch(console.error),
-    18000
-  );
-  setInterval(
-    () => generateMarketReport(store, DEEPSEEK_TOKEN, { force: false, maxAgeMs: 6 * 60 * 60 * 1000 }).catch(console.error),
-    60 * 60 * 1000
-  );
 });
