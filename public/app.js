@@ -159,7 +159,7 @@ const SOURCE_KEY_MAP = {
   'BBC中东': 'bbc', '半岛电视台': 'aljazeera', '以色列时报': 'toi',
   '卫报': 'guardian', '耶路撒冷邮报': 'jpost', 'France 24': 'france24',
   '中东眼': 'mee', 'Press TV': 'presstv', '纽约时报': 'nyt', 'NPR': 'npr', 'TASS': 'tass',
-  '新华社': 'xinhua',
+  '环球时报': 'globaltimes', 'CGTN': 'cgtn',
 };
 
 function buildSourceLegend(events) {

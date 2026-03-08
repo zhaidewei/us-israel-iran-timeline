@@ -3,7 +3,6 @@ const path    = require('path');
 
 const store = require('./lib/localStore');
 const { fetchAndRefresh, generateSituationReport, analyzeWithDeepSeek } = require('./lib/news');
-const { translateBatch }    = require('./lib/translate');
 const { fetchPolymarketData } = require('./lib/polymarket');
 const { fetchMarketPrices }   = require('./lib/prices');
 const { requireRefreshAuth } = require('./lib/refreshAuth');
@@ -61,24 +60,17 @@ app.get('/api/retranslate', async (req, res) => {
     return res.status(400).json({ error: 'DEEPSEEK_API_TOKEN 未设置' });
   try {
     const events = (await store.get('events')) || [];
-    const needsTrans = events.filter(e => !e.titleZh || e.titleZh === e.titleEn);
-    console.log(`[重翻译] 需翻译 ${needsTrans.length} 条`);
-    if (needsTrans.length && DEEPSEEK_TOKEN) {
-      const translated = await translateBatch(needsTrans.map(e => e.titleEn), DEEPSEEK_TOKEN);
-      needsTrans.forEach((e, i) => { e.titleZh = translated[i] || e.titleEn; });
-    }
-    const transIds = new Set(needsTrans.map(e => e.id));
-    const needsAnalysis = events.filter(e => !e.eventCluster || transIds.has(e.id));
-    console.log(`[重翻译] 需 LLM 分析 ${needsAnalysis.length} 条`);
-    let finalEvents = events;
-    if (needsAnalysis.length && DEEPSEEK_TOKEN) {
-      const hasCluster = events.filter(e => e.eventCluster && !transIds.has(e.id));
-      const analyzed = await analyzeWithDeepSeek(needsAnalysis, hasCluster, DEEPSEEK_TOKEN);
-      const analyzedMap = new Map(analyzed.map(e => [e.id, e]));
-      finalEvents = events.map(e => analyzedMap.get(e.id) || e);
-    }
+    // 需要处理：缺少中文标题 或 缺少聚类分析
+    const needsWork = events.filter(e => !e.titleZh || e.titleZh === e.titleEn || !e.eventCluster);
+    console.log(`[重翻译] 需处理 ${needsWork.length} 条`);
+    if (!needsWork.length) return res.json({ message: '所有事件已翻译分析', total: events.length });
+    const hasCluster = events.filter(e => e.eventCluster && e.titleZh && e.titleZh !== e.titleEn);
+    // analyzeWithDeepSeek 在单次 API 调用中同时完成翻译和分析
+    const analyzed = await analyzeWithDeepSeek(needsWork, hasCluster, DEEPSEEK_TOKEN);
+    const analyzedMap = new Map(analyzed.map(e => [e.id, e]));
+    const finalEvents = events.map(e => analyzedMap.get(e.id) || e);
     await store.set('events', finalEvents);
-    res.json({ message: `已修复：翻译 ${needsTrans.length} 条，LLM 分析 ${needsAnalysis.length} 条`, total: finalEvents.length });
+    res.json({ message: `已处理 ${needsWork.length} 条（翻译+分析合并为单次调用）`, total: finalEvents.length });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }

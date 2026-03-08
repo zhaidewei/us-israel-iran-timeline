@@ -22,7 +22,8 @@
   --npr-color:     #60a5fa;
   --irna-color:    #fb923c;
   --tass-color:    #f472b6;
-  --xinhua-color:  #e63946;
+  --globaltimes-color: #e63946;
+  --cgtn-color:    #a78bfa;
 
   --radius: 10px;
   --transition: 0.2s ease;
@@ -394,7 +395,8 @@ body {
 .legend-item.npr      { color: var(--npr-color); }
 .legend-item.irna     { color: var(--irna-color); }
 .legend-item.tass     { color: var(--tass-color); }
-.legend-item.xinhua   { color: var(--xinhua-color); }
+.legend-item.globaltimes { color: var(--globaltimes-color); }
+.legend-item.cgtn     { color: var(--cgtn-color); }
 
 .legend-all-btn {
   background: none;
@@ -613,7 +615,8 @@ body {
 .event-card.npr      { border-left: 3px solid var(--npr-color); }
 .event-card.irna     { border-left: 3px solid var(--irna-color); }
 .event-card.tass     { border-left: 3px solid var(--tass-color); }
-.event-card.xinhua   { border-left: 3px solid var(--xinhua-color); }
+.event-card.globaltimes { border-left: 3px solid var(--globaltimes-color); }
+.event-card.cgtn     { border-left: 3px solid var(--cgtn-color); }
 
 .event-card.bbc::before      { background: var(--bbc-color); }
 .event-card.aljazeera::before{ background: var(--aljazeera-color); }
@@ -627,7 +630,8 @@ body {
 .event-card.npr::before      { background: var(--npr-color); }
 .event-card.irna::before     { background: var(--irna-color); }
 .event-card.tass::before     { background: var(--tass-color); }
-.event-card.xinhua::before   { background: var(--xinhua-color); }
+.event-card.globaltimes::before { background: var(--globaltimes-color); }
+.event-card.cgtn::before     { background: var(--cgtn-color); }
 
 /* Card meta row */
 .card-meta {
@@ -658,7 +662,8 @@ body {
 .npr .source-tag      { background: rgba(96,165,250,0.18);  color: var(--npr-color); }
 .irna .source-tag     { background: rgba(251,146,60,0.18);  color: var(--irna-color); }
 .tass .source-tag     { background: rgba(244,114,182,0.18); color: var(--tass-color); }
-.xinhua .source-tag   { background: rgba(230,57,70,0.18);   color: var(--xinhua-color); }
+.globaltimes .source-tag { background: rgba(230,57,70,0.18);   color: var(--globaltimes-color); }
+.cgtn .source-tag     { background: rgba(167,139,250,0.18);  color: var(--cgtn-color); }
 
 /* ===== Category Tags ===== */
 .category-tag {
