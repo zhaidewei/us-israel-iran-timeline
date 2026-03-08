@@ -1,4 +1,4 @@
-// 实时从 Polymarket 拉取并更新 KV 缓存（前端可触发，禁用 DeepL 以免消耗 token）
+// 实时从 Polymarket 拉取并更新 KV 缓存（用户触发，不消耗翻译 token）
 const kv = require('../../lib/kv');
 const { fetchPolymarketData } = require('../../lib/polymarket');
 

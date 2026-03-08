@@ -35,11 +35,9 @@ async function main() {
     process.exit(1);
   }
 
-  const DEEPL_TOKEN = process.env.DEEPL_TOKEN || '';
   const DEEPSEEK_TOKEN = process.env.DEEPSEEK_API_TOKEN || '';
 
-  if (!DEEPL_TOKEN) console.warn('⚠ DEEPL_TOKEN 未设置，翻译将降级为原文');
-  if (!DEEPSEEK_TOKEN) console.warn('⚠ DEEPSEEK_API_TOKEN 未设置，LLM 分析将跳过');
+  if (!DEEPSEEK_TOKEN) console.warn('⚠ DEEPSEEK_API_TOKEN 未设置，翻译和 LLM 分析将跳过');
 
   if (target === 'kv' && (!process.env.KV_REST_API_URL || !process.env.KV_REST_API_TOKEN)) {
     console.error('❌ --target=kv 需要 KV_REST_API_URL 和 KV_REST_API_TOKEN');
@@ -49,9 +47,9 @@ async function main() {
   const start = Date.now();
   console.log(`=== 开始Token任务（target=${target}）===`, new Date().toISOString());
 
-  await fetchAndRefresh(store, { deeplToken: DEEPL_TOKEN, deepseekToken: DEEPSEEK_TOKEN });
+  await fetchAndRefresh(store, { deeplToken: DEEPSEEK_TOKEN, deepseekToken: DEEPSEEK_TOKEN });
   await generateSituationReport(store, DEEPSEEK_TOKEN, { force: false, maxAgeMs: 6 * 60 * 60 * 1000 });
-  await fetchPolymarketData(store, DEEPL_TOKEN);
+  await fetchPolymarketData(store, DEEPSEEK_TOKEN);
 
   const sec = ((Date.now() - start) / 1000).toFixed(1);
   console.log(`=== Token任务完成（target=${target}）=== ${new Date().toISOString()} （耗时 ${sec}s）`);

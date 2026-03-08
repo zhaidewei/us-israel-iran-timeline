@@ -11,11 +11,9 @@ const { requireRefreshAuth } = require('./lib/refreshAuth');
 const app  = express();
 const PORT = 3000;
 
-const DEEPL_TOKEN    = process.env.DEEPL_TOKEN;
 const DEEPSEEK_TOKEN = process.env.DEEPSEEK_API_TOKEN;
-const tokens = { deeplToken: DEEPL_TOKEN, deepseekToken: DEEPSEEK_TOKEN };
+const tokens = { deeplToken: DEEPSEEK_TOKEN, deepseekToken: DEEPSEEK_TOKEN };
 
-if (!DEEPL_TOKEN)    console.warn('[警告] DEEPL_TOKEN 未设置');
 if (!DEEPSEEK_TOKEN) console.warn('[警告] DEEPSEEK_API_TOKEN 未设置');
 
 // ─── Routes ───────────────────────────────────────────────────────────────────
@@ -59,14 +57,14 @@ app.get('/api/reanalyze', async (req, res) => {
 
 app.get('/api/retranslate', async (req, res) => {
   if (!requireRefreshAuth(req, res)) return;
-  if (!DEEPL_TOKEN && !DEEPSEEK_TOKEN)
-    return res.status(400).json({ error: 'DEEPL_TOKEN 和 DEEPSEEK_API_TOKEN 均未设置' });
+  if (!DEEPSEEK_TOKEN)
+    return res.status(400).json({ error: 'DEEPSEEK_API_TOKEN 未设置' });
   try {
     const events = (await store.get('events')) || [];
     const needsTrans = events.filter(e => !e.titleZh || e.titleZh === e.titleEn);
     console.log(`[重翻译] 需翻译 ${needsTrans.length} 条`);
-    if (needsTrans.length && DEEPL_TOKEN) {
-      const translated = await translateBatch(needsTrans.map(e => e.titleEn), DEEPL_TOKEN);
+    if (needsTrans.length && DEEPSEEK_TOKEN) {
+      const translated = await translateBatch(needsTrans.map(e => e.titleEn), DEEPSEEK_TOKEN);
       needsTrans.forEach((e, i) => { e.titleZh = translated[i] || e.titleEn; });
     }
     const transIds = new Set(needsTrans.map(e => e.id));
@@ -116,8 +114,8 @@ app.get('/api/polymarket/refresh', async (req, res) => {
   }
   lastPolymarketRefresh = now;
   try {
-    // 前端可触发的非 token 刷新：禁用 DeepL
-    res.json(await fetchPolymarketData(store, null));
+    // 用户触发，不消耗翻译 token；翻译由定时任务负责
+    res.json(await fetchPolymarketData(store, ''));
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -142,14 +140,13 @@ if (require.main === module) {
   app.listen(PORT, () => {
     console.log(`\n美以伊战争时间线已启动`);
     console.log(`访问: http://localhost:${PORT}`);
-    console.log(`DeepL:    ${DEEPL_TOKEN    ? '✓' : '✗ 未配置'}`);
     console.log(`DeepSeek: ${DEEPSEEK_TOKEN ? '✓' : '✗ 未配置'}\n`);
 
     setTimeout(() => fetchAndRefresh(store, tokens).catch(console.error), 2000);
     setInterval(() => fetchAndRefresh(store, tokens).catch(console.error), 10 * 60 * 1000);
 
-    setTimeout(() => fetchPolymarketData(store, DEEPL_TOKEN).catch(console.error), 6000);
-    setInterval(() => fetchPolymarketData(store, DEEPL_TOKEN).catch(console.error), 5 * 60 * 1000);
+    setTimeout(() => fetchPolymarketData(store, DEEPSEEK_TOKEN).catch(console.error), 6000);
+    setInterval(() => fetchPolymarketData(store, DEEPSEEK_TOKEN).catch(console.error), 5 * 60 * 1000);
 
     setTimeout(() => fetchMarketPrices(store).catch(console.error), 8000);
     setInterval(() => fetchMarketPrices(store).catch(console.error), 15 * 60 * 1000);
