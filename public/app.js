@@ -13,7 +13,6 @@ function toggleTheme() {
 })();
 
 // ─── State ────────────────────────────────────────────────────────────────────
-const AUTO_REFRESH_MS = 10 * 60 * 1000;
 let isRefreshing    = false;
 let allEvents       = [];
 let lastEventIds    = new Set();
@@ -1155,7 +1154,7 @@ async function refreshEvents(isAuto = false) {
   if (isRefreshing) return;
   setRefreshing(true);
   try {
-    // 读取 KV 缓存（数据由 GitHub Actions 每小时更新）
+    // 读取 KV 缓存（数据由后端定时任务按小时更新）
     const res  = await fetch('/api/events');
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const data = await res.json();
@@ -1184,7 +1183,7 @@ async function refreshEvents(isAuto = false) {
 function manualRefresh() { refreshEvents(false); }
 
 function startAutoRefresh() {
-  setInterval(() => refreshEvents(true), AUTO_REFRESH_MS);
+  // News data updates hourly on the backend, so avoid client polling to cut function transfer.
 }
 
 document.addEventListener('DOMContentLoaded', () => {
