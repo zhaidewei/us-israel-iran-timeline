@@ -12,7 +12,7 @@
  */
 const localStore = require('../lib/localStore');
 const kv = require('../lib/kv');
-const { fetchAndRefresh, generateSituationReport } = require('../lib/news');
+const { fetchAndRefresh, generateSituationReport, analyzeWithDeepSeek } = require('../lib/news');
 const { fetchPolymarketData } = require('../lib/polymarket');
 
 function parseTarget(argv) {
@@ -47,7 +47,25 @@ async function main() {
   const start = Date.now();
   console.log(`=== 开始Token任务（target=${target}）===`, new Date().toISOString());
 
-  await fetchAndRefresh(store, { deeplToken: DEEPSEEK_TOKEN, deepseekToken: DEEPSEEK_TOKEN });
+  await fetchAndRefresh(store, { deepseekToken: DEEPSEEK_TOKEN });
+
+  // 修复存量事件中 titleZh 未翻译的条目（单次 DeepSeek 调用，翻译+分析合并）
+  if (DEEPSEEK_TOKEN) {
+    const events = (await store.get('events')) || [];
+    const needsWork = events.filter(e => !e.titleZh || e.titleZh === e.titleEn || !e.eventCluster);
+    if (needsWork.length) {
+      console.log(`[retranslate] 修复存量未翻译事件 ${needsWork.length} 条...`);
+      const hasCluster = events.filter(e => e.eventCluster && e.titleZh && e.titleZh !== e.titleEn);
+      const analyzed = await analyzeWithDeepSeek(needsWork, hasCluster, DEEPSEEK_TOKEN);
+      const analyzedMap = new Map(analyzed.map(e => [e.id, e]));
+      const fixed = events.map(e => analyzedMap.get(e.id) || e);
+      await store.set('events', fixed);
+      console.log(`[retranslate] 完成`);
+    } else {
+      console.log('[retranslate] 无需修复');
+    }
+  }
+
   await generateSituationReport(store, DEEPSEEK_TOKEN, { force: false, maxAgeMs: 6 * 60 * 60 * 1000 });
   await fetchPolymarketData(store, DEEPSEEK_TOKEN);
 
