@@ -1,15 +1,15 @@
 // ─── Theme ────────────────────────────────────────────────────────────────────
 function toggleTheme() {
-  const isLight = document.documentElement.classList.toggle('light');
-  localStorage.setItem('theme', isLight ? 'light' : 'dark');
+  const isDark = document.documentElement.classList.toggle('dark');
+  localStorage.setItem('theme', isDark ? 'dark' : 'light');
   const btn = document.getElementById('theme-toggle');
-  if (btn) btn.textContent = isLight ? '☀️' : '🌙';
+  if (btn) btn.textContent = isDark ? '☀️' : '🌙';
 }
 
 (function initTheme() {
-  const isLight = document.documentElement.classList.contains('light');
+  const isDark = document.documentElement.classList.contains('dark');
   const btn = document.getElementById('theme-toggle');
-  if (btn) btn.textContent = isLight ? '☀️' : '🌙';
+  if (btn) btn.textContent = isDark ? '☀️' : '🌙';
 })();
 
 // ─── State ────────────────────────────────────────────────────────────────────
@@ -817,7 +817,7 @@ function renderAnalysis(data) {
   ).join('');
 
   body.innerHTML = `
-    <div class="analysis-card" style="border-color:${color}40; background: linear-gradient(135deg, ${bg}, transparent)">
+    <div class="analysis-card">
 
       <div class="risk-row">
         <div class="risk-meter">
